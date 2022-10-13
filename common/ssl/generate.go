@@ -4,7 +4,7 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	. "github.com/mickael-kerjean/virtualshell/common"
+	. "github.com/mickael-kerjean/webpty/common"
 )
 
 func GenerateSelfSigned() (tls.Certificate, *x509.CertPool, error) {

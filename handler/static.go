@@ -2,7 +2,7 @@ package handler
 
 import (
 	"embed"
-	. "github.com/mickael-kerjean/virtualshell/common"
+	. "github.com/mickael-kerjean/webpty/common"
 	"io"
 	"net/http"
 	"path/filepath"

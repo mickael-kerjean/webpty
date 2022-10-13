@@ -1,4 +1,4 @@
-module github.com/mickael-kerjean/virtualshell
+module github.com/mickael-kerjean/webpty
 
 go 1.16
 

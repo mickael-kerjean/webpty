@@ -5,7 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	. "github.com/mickael-kerjean/virtualshell/common"
+	. "github.com/mickael-kerjean/webpty/common"
 	"io/ioutil"
 	"os"
 )

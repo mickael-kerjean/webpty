@@ -4,9 +4,9 @@ import (
 	"crypto/tls"
 	_ "embed"
 	"fmt"
-	. "github.com/mickael-kerjean/virtualshell/common"
-	"github.com/mickael-kerjean/virtualshell/common/ssl"
-	. "github.com/mickael-kerjean/virtualshell/handler"
+	. "github.com/mickael-kerjean/webpty/common"
+	"github.com/mickael-kerjean/webpty/common/ssl"
+	. "github.com/mickael-kerjean/webpty/handler"
 	"net"
 	"net/http"
 )

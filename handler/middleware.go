@@ -1,7 +1,7 @@
 package handler
 
 import (
-	. "github.com/mickael-kerjean/virtualshell/common"
+	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/crypto/ssh"
 	"net"
