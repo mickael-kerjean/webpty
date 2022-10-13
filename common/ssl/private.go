@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	. "github.com/mickael-kerjean/virtualshell/common"
 	"io/ioutil"
 	"os"
 )
@@ -13,6 +14,7 @@ func GetPrivateKey() (*rsa.PrivateKey, []byte, error) {
 	if private, privatePEM, err := pullPrivateKeyFromFS(); err == nil {
 		return private, privatePEM, nil
 	}
+	Log.Info("generating a private key")
 	key, keyPEM, err := generateNewPrivateKey()
 	if err != nil {
 		Clear()

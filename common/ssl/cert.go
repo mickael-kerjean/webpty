@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	. "github.com/mickael-kerjean/virtualshell/common"
 	"io/ioutil"
 	"os"
 )
@@ -13,6 +14,7 @@ func GetCertificate(key *rsa.PrivateKey, root *x509.Certificate) (*x509.Certific
 	if cert, certPEM, err := pullCertificateFromFS(); err == nil {
 		return cert, certPEM, nil
 	}
+	Log.Info("generating a new certificate")
 	cert, certPEM, err := generateNewCertificate(root, key)
 	if err != nil {
 		Clear()

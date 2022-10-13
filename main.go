@@ -37,14 +37,7 @@ func main() {
 		return
 	}))
 
-	TLSCert, _, err := ssl.GenerateSelfSigned()
-	if err != nil {
-		Log.Error("ssl.GenerateSelfSigned %s", err.Error())
-		return
-	}
-
-	go func() {
-		msg := `
+	msg := `
     ██╗    ██╗███████╗██████╗ ██████╗ ████████╗██╗   ██╗
     ██║    ██║██╔════╝██╔══██╗██╔══██╗╚══██╔══╝╚██╗ ██╔╝
     ██║ █╗ ██║█████╗  ██████╔╝██████╔╝   ██║    ╚████╔╝ 
@@ -54,20 +47,16 @@ func main() {
 
     Web Interface:
 `
-		isOk := false
-		for _, url := range getAddress() {
-			if isOnline(url) {
-				msg += fmt.Sprintf("    - %s\n", url)
-				isOk = true
-			}
-		}
-		if isOk == false {
-			Log.Error("Couldn't start WebPty")
-			return
-		}
-		Log.Stdout(msg + "\nLOGS:")
-		Log.Info("WebPty is ready to go")
-	}()
+	for _, url := range getAddress() {
+		msg += fmt.Sprintf("    - %s\n", url)
+	}
+	Log.Stdout(msg + "\nLOGS:")
+	TLSCert, _, err := ssl.GenerateSelfSigned()
+	if err != nil {
+		Log.Error("ssl.GenerateSelfSigned %s", err.Error())
+		return
+	}
+	Log.Info("WebPty is ready to go")
 
 	if err := (&http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
