@@ -4,7 +4,6 @@ import (
 	"embed"
 	. "github.com/mickael-kerjean/virtualshell/common"
 	"io"
-	"io/fs"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -18,44 +17,22 @@ func HandleStatic(res http.ResponseWriter, req *http.Request) {
 	urlPath := req.URL.Path
 	if urlPath == "/" {
 		res.Header().Set("Content-Type", "text/html; charset=utf-8")
-		f, err := efs.Open("src/index.html")
-		if err != nil {
-			Log.Error("handler::static efs.Open %s", err.Error())
-			ErrorPage(res, ErrNotFound, 404)
-			return
-		}
-		io.Copy(res, f)
+		ServeFile(res, req, "src/index.html")
 		return
 	}
 
-	var (
-		f   fs.File
-		err error
-	)
+	actualPath := ""
 	if strings.HasPrefix(urlPath, "/app/") {
 		base := filepath.Base(urlPath)
-		f, err = efs.Open("src/app/" + base)
+		actualPath = "src/app/" + base
 	} else if strings.HasPrefix(urlPath, "/node_modules/") {
-		f, err = efs.Open("src" + urlPath)
+		actualPath = "src" + urlPath
 	} else {
 		ErrorPage(res, ErrNotFound, 404)
 		return
 	}
+	ServeFile(res, req, actualPath)
 
-	if err != nil {
-		Log.Error("handler::static fs.Open url[%s] err[%s]", urlPath, err.Error())
-		ErrorPage(res, ErrNotFound, 404)
-		return
-	}
-
-	if strings.HasSuffix(urlPath, ".js") {
-		res.Header().Set("Content-Type", "application/javascript; charset=utf-8")
-	} else if strings.HasSuffix(urlPath, ".css") {
-		res.Header().Set("Content-Type", "text/css; charset=utf-8")
-	} else {
-		res.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	}
-	io.Copy(res, f)
 }
 
 func ErrorPage(res http.ResponseWriter, err error, code int) {
@@ -87,4 +64,37 @@ func ErrorPage(res http.ResponseWriter, err error, code int) {
 		ErrorCode    int
 		ErrorMessage string
 	}{code, err.Error()})
+}
+
+// gzip compression was done using:
+// find . -type f | grep -v '\.ts$' | grep -v '\.map$' | xargs gzip -f -k --best
+func ServeFile(res http.ResponseWriter, req *http.Request, filePath string) {
+	head := res.Header()
+	acceptEncoding := req.Header.Get("Accept-Encoding")
+	if strings.Contains(acceptEncoding, "gzip") {
+		if file, err := efs.Open(filePath + ".gz"); err == nil {
+			head.Set("Content-Encoding", "gzip")
+			io.Copy(res, file)
+			file.Close()
+			return
+		}
+	}
+
+	file, err := efs.Open(filePath)
+	if err != nil {
+		ErrorPage(res, ErrNotFound, 404)
+		return
+	}
+
+	if strings.HasSuffix(filePath, ".js") {
+		res.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	} else if strings.HasSuffix(filePath, ".css") {
+		res.Header().Set("Content-Type", "text/css; charset=utf-8")
+	} else if strings.HasSuffix(filePath, ".html") {
+		res.Header().Set("Content-Type", "text/html; charset=utf-8")
+	} else {
+		res.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	}
+	io.Copy(res, file)
+	file.Close()
 }
