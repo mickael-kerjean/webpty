@@ -11,6 +11,8 @@ import (
 	"net/http"
 )
 
+var port int = 3456
+
 //go:embed .assets/favicon.ico
 var IconFavicon []byte
 
@@ -68,7 +70,7 @@ func main() {
 	}()
 
 	if err := (&http.Server{
-		Addr:         ":5560",
+		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      mux,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 		TLSConfig: &tls.Config{
@@ -104,7 +106,7 @@ func getAddress() []string {
 	for _, address := range addrs {
 		if ipnet, ok := address.(*net.IPNet); ok {
 			if ipnet.IP.To4() != nil {
-				ips = append(ips, fmt.Sprintf("https://%s:5560", ipnet.IP.String()))
+				ips = append(ips, fmt.Sprintf("https://%s:%d", ipnet.IP.String(), port))
 			}
 		}
 	}
