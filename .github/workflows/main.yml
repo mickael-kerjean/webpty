@@ -1,0 +1,21 @@
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: golang:1.16-alpine
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Run tests
+      run: go test ./...
+    - name: Generate the build
+      run: |
+        GOARCH="arm" GOARM=7 GOOS="linux" go build -mod=vendor -o dist/webpty_arm.bin main.go
+        GOARCH="amd4" GOOS="linux" go build -mod=vendor -o dist/webpty_amd64.bin main.go
+    - name: Release
+      uses: actions/upload-artifact@v2
+      with:
+        name: release
+        path: dist
