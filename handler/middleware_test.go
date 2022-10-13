@@ -20,7 +20,7 @@ func TestBasicAuth(t *testing.T) {
 			req.Header.Set("Authorization", test.AuthHeader)
 		}
 		res := httptest.NewRecorder()
-		BasicAuth(func(res http.ResponseWriter, req *http.Request) {
+		Middleware(func(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(200)
 			res.Write([]byte("OK"))
 		})(res, req)

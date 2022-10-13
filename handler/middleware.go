@@ -34,7 +34,7 @@ func Middleware(fn func(res http.ResponseWriter, req *http.Request)) func(res ht
 			return
 		}
 
-		if val, found := tmpCache.Get(username + ":" + password); found == true && val != true {
+		if _, found := tmpCache.Get(username + ":" + password); found == false {
 			client, err := ssh.Dial("tcp", "127.0.0.1:22", &ssh.ClientConfig{
 				User: username,
 				Auth: []ssh.AuthMethod{ssh.Password(password)},
@@ -49,7 +49,7 @@ func Middleware(fn func(res http.ResponseWriter, req *http.Request)) func(res ht
 				return
 			}
 			client.Close()
-			tmpCache.Set(username+":"+password, true, cache.DefaultExpiration)
+			tmpCache.Set(username+":"+password, nil, cache.DefaultExpiration)
 		}
 		fn(res, req)
 	}
