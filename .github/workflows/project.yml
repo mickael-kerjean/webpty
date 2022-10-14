@@ -1,0 +1,41 @@
+name: Build / Test / Release
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    environment: cicd
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: |
+        GOARCH="amd64" GOOS="linux" go build -o dist/webpty_linux_amd64.bin main.go
+        GOARCH="arm" GOARM=7 GOOS="linux" go build -o dist/webpty_linux_arm.bin main.go
+
+    - name: Test
+      run: go test ./...
+
+    - name: Upload Release Assets
+      env:
+        OWNER: mickael-kerjean
+        REPO: webpty
+        RELEASE_ID: 79898913
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # remove all assets
+        curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$OWNER/$REPO/releases/$RELEASE_ID/assets" > assets.json
+        cat assets.json | sed -n 's|^    "id": \([0-9]*\),|\1|p' > existing_assets_ids.txt > asset_ids.txt
+        cat asset_ids.txt | xargs -I ASSET_ID curl -X DELETE -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/$OWNER/$REPO/releases/assets/ASSET_ID"
+        # upload new assets
+        curl --data-binary @dist/webpty_linux_amd64.bin -H "Content-Type: application/octet-stream" -H "Authorization: Bearer $GITHUB_TOKEN" "https://uploads.github.com/repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=webpty_linux_amd64.bin"
+        curl --data-binary @dist/webpty_linux_arm.bin -H "Content-Type: application/octet-stream" -H "Authorization: Bearer $GITHUB_TOKEN" "https://uploads.github.com/repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=webpty_linux_arm.bin"

@@ -84,11 +84,8 @@
         <section class="step">
             <div class="number">1</div>
             <h2>Download the binary</h2>
-            <pre>
-# intel/amd
-curl https://webpty.io/release/webpty_amd64.bin > webpty.bin
-# arm
-curl https://webpty.io/release/webpty_arm.bin > webpty.bin
+            <pre style="overflow-x:auto;">
+curl -L -o webpty.bin "https://github.com/mickael-kerjean/webpty/releases/download/stable/webpty_linux_`dpkg --print-architecture`.bin"
             </pre>
         </section>
 
