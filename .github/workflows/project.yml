@@ -1,0 +1,35 @@
+name: Build / Test / Release
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    environment: cicd
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: |
+        GOARCH="amd64" GOOS="linux" go build -o dist/webpty_Linux_x86_64.bin main.go
+
+    - name: Test
+      run: go test ./...
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: https://github.com/upload/releases/80999154
+        asset_path: ./dist/webpty_Linux_x86_64.bin
+        asset_name: webpty_Linux_x86_64.bin
+        asset_content_type: application/octet-stream
