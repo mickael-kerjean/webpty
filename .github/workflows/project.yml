@@ -1,0 +1,32 @@
+name: Build / Test / Release
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    environment: cicd
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Build
+      run: |
+        GOARCH="amd64" GOOS="linux" go build -o dist/Linux/x86_64/webpty.bin main.go
+
+    - name: Test
+      run: go test ./...
+
+    - uses: ncipollo/release-action@v1
+      with:
+        name: Release
+        removeArtifacts: true
+        artifacts: "dist/*"
+        token: ${{ secrets.RELEASE_TOKEN }}
