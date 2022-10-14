@@ -1,6 +1,6 @@
 <p align="center">
     <a href="http://www.webpty.io" target="_blank" rel="noopener">
-        <img src="https://raw.githubusercontent.com/mickael-kerjean/webpty/.assets/github_readme.png" alt="WebPty - open source web shell from 1 binary" />
+        <img src="https://raw.githubusercontent.com/mickael-kerjean/webpty/main/.assets/github_readme.png" alt="WebPty - open source web shell from 1 binary" />
     </a>
 </p>
 
@@ -13,6 +13,7 @@
 - (in the roadmap) make it work even from some closed network so you can access your raspberry pi at home from your office sitting behind your company VPN
 - (in the roadmap) plugin mechanism to support additional user management mechanism, custom theme, ...
 - (in the roadmap) can be integrated as a library to provide a webshell to your application
+- (in the roadmap) emoji and other weird characters
 
 # Install
 
