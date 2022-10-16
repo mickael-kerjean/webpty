@@ -10,6 +10,8 @@ import (
 	"text/template"
 )
 
+//go:generate bash static.sh
+
 //go:embed src
 var efs embed.FS
 
