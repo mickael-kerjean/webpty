@@ -72,11 +72,10 @@
                  });
              }
 
+             const textDecoder = new TextDecoder();
              websocket.onmessage = function(e) {
                  if (e.data instanceof ArrayBuffer) {
-                     // String.fromCodePoint works for emoji
-                     // String.fromCharCode doesnt work
-                     term.write(String.fromCodePoint.apply(null, new Uint8Array(e.data)));
+                     term.write(textDecoder.decode(new Uint8Array(e.data)));
                      return;
                  }
                  websocket.close();
