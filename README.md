@@ -4,22 +4,29 @@
     </a>
 </p>
 
-[WebPty](http://www.webpty) is an open source web shell which features:
+I love bash and I spend most of my time in a terminal so I needed a way to bring that environment over to my browser to make it confortable to run my servers.
 
-- full fledge terminal from your browser that works well with emacs/vim, ...
-- safe by default: creates its own self signed certificates if you haven't supply your own, rely on SSH to authorise users
-- good looking
-- zero config fat binary that "just work" from anything anywhere
-- (in the roadmap) make it work even from some closed network so you can access your raspberry pi at home from your office sitting behind your company VPN
-- (in the roadmap) plugin mechanism to support additional user management mechanism, custom theme, ...
-- (in the roadmap) can be integrated as a library to provide a webshell to your application
-- (in the roadmap) emoji and other weird characters
+Webpty is a zero config fat binary that "just work" from any server with any program (obviously including the likes of tmux, vim, emacs, ...). 
+
+It is safe by default meaning:
+- you can't use webpty using HTTP at all
+- it will create its own self signed certificates if you don't supply your own
+- rely on SSH to authorise users meaning only people who already have an account on the box can connect to webpty
+- I have it exposed on the internet to manage my servers which run in prod at [Filestash](https://github.com/mickael-kerjean/filestash)
+
+In the roadmap:
+- plugin mechanism to support additional user management mechanism, custom theme, logs, ...
+- optional proxy to make it possible to access your pi at home from a restricted network at work
+- run webpty as a library so you can make a webshell for your own web application
 
 # Install
 
 ```
-# download binary from github release
-curl -L -o webpty.bin "https://github.com/mickael-kerjean/webpty/releases/download/stable/webpty_linux_`dpkg --print-architecture`.bin"
+# arm build
+curl -L -o webpty.bin "https://github.com/mickael-kerjean/webpty/releases/download/stable/webpty_linux_arm.bin"
+# intel/amd
+curl -L -o webpty.bin "https://github.com/mickael-kerjean/webpty/releases/download/stable/webpty_linux_amd64.bin"
+
 
 # launch it
 chmod +x webpty.bin
