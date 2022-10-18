@@ -18,7 +18,9 @@
     <script>
       var websocket = new WebSocket(
           (location.protocol === "https:" ? "wss://" : "ws://") +
-              location.hostname + ((location.port) ? (":" + location.port) : "") + "/socket"
+              location.hostname + ((location.port) ? (":" + location.port) : "") +
+              location.pathname +
+              "socket"
       );
       websocket.binaryType = "arraybuffer";
 
@@ -79,18 +81,18 @@
                      return;
                  }
                  websocket.close();
-                 term.write("Something went wrong");
-                 term.destroy();
+                 term.writeln("Something went wrong");
+                 // term.dispose();
              }
 
              websocket.onclose = function(){
-                 term.write("Session terminated");
-                 term.destroy();
+                 term.writeln("Session terminated");
+                 // term.dispose();
              }
 
              websocket.onerror = function(e){
-                 term.write("Websocket Error");
-                 term.destroy();
+                 term.writeln("Websocket Error");
+                 // term.dispose();
              }
          }
          Boot();
