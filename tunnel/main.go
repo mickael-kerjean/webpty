@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	_ "embed"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -10,8 +11,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
+
+//go:embed home.html
+var htmlHome []byte
 
 func authorizer(req *http.Request) (string, bool, error) {
 	id := req.Header.Get("x-machine-id")
@@ -30,11 +35,28 @@ func ClientSocket(rw http.ResponseWriter, req *http.Request, dialer remotedialer
 		rw.Write([]byte(err.Error()))
 		return
 	}
-
 	appConn, _, err := (&websocket.Dialer{
 		NetDial:         dialer,
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}).Dial(url, nil)
+	}).Dial(
+		url,
+		func() http.Header {
+			h := http.Header{}
+			for k, v := range req.Header {
+				switch k {
+				case "Sec-Websocket-Key":
+				case "Sec-Websocket-Extensions":
+				case "Sec-Websocket-Version":
+				case "Upgrade":
+				case "Connection":
+				case "Origin":
+				default:
+					h.Add(k, strings.Join(v, " "))
+				}
+			}
+			return h
+		}(),
+	)
 	if err != nil {
 		Log.Error("WS DIAL ERR %s", err.Error())
 		return
@@ -71,13 +93,22 @@ func ClientSocket(rw http.ResponseWriter, req *http.Request, dialer remotedialer
 }
 
 func ClientHTTP(rw http.ResponseWriter, req *http.Request, dialer remotedialer.Dialer, url string) {
+	r, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		Log.Error("REQ ERR %s: %s", url, err.Error())
+		remotedialer.DefaultErrorWriter(rw, req, 500, err)
+		return
+	}
+	for k, v := range req.Header {
+		r.Header.Add(k, strings.Join(v, " "))
+	}
 	resp, err := (&http.Client{
 		Timeout: 15 * time.Second,
 		Transport: &http.Transport{
 			Dial:            dialer,
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
-	}).Get(url)
+	}).Do(r)
 	if err != nil {
 		Log.Error("REQ ERR %s: %s", url, err.Error())
 		remotedialer.DefaultErrorWriter(rw, req, 500, err)
@@ -85,13 +116,7 @@ func ClientHTTP(rw http.ResponseWriter, req *http.Request, dialer remotedialer.D
 	}
 	defer resp.Body.Close()
 	for k, v := range resp.Header {
-		for _, h := range v {
-			if rw.Header().Get(k) == "" {
-				rw.Header().Set(k, h)
-			} else {
-				rw.Header().Add(k, h)
-			}
-		}
+		rw.Header().Add(k, strings.Join(v, " "))
 	}
 	rw.WriteHeader(resp.StatusCode)
 	io.Copy(rw, resp.Body)
@@ -113,6 +138,7 @@ func main() {
 
 	router := mux.NewRouter()
 	router.Handle("/connect", handler)
+	router.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) { rw.Write(htmlHome) })
 	router.HandleFunc("/{tenant}/{path:.*}", func(rw http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		if req.Header.Get("Connection") == "Upgrade" {

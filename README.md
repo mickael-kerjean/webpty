@@ -15,8 +15,8 @@ It is safe by default meaning:
 - I have it exposed on the internet to manage my servers which run in prod at [Filestash](https://github.com/mickael-kerjean/filestash)
 
 In the roadmap:
+- make it possible to expose a server from the internet via a tunnel
 - plugin mechanism to support additional user management mechanism, custom theme, logs, ...
-- optional proxy to make it possible to access your pi at home from a restricted network at work
 - run webpty as a library so you can make a webshell for your own web application
 
 # Install

@@ -1,19 +1,14 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
 	_ "embed"
 	"fmt"
-	"github.com/gorilla/websocket"
 	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/mickael-kerjean/webpty/common/ssl"
 	. "github.com/mickael-kerjean/webpty/handler"
-	"github.com/rancher/remotedialer"
-	"io/ioutil"
 	"net"
 	"net/http"
-	// "time"
 )
 
 var port int = 3456
@@ -41,6 +36,8 @@ func main() {
 		ErrorPage(res, ErrNotFound, 404)
 		return
 	}))
+	mux.HandleFunc("/setup", SetupTunnel)
+	mux.HandleFunc("/tunnel.js", RedirectTunnel)
 
 	msg := `
     ██╗    ██╗███████╗██████╗ ██████╗ ████████╗██╗   ██╗
@@ -55,6 +52,12 @@ func main() {
 	for _, url := range getAddress() {
 		msg += fmt.Sprintf("    - %s\n", url)
 	}
+	// 	msg += `
+	//   |---------------------------------------------------------|
+	//   | Create a public link even though your server is behind  |
+	//   | NAT or a firewall: https://127.0.0.1:3456/setup         |
+	//   |---------------------------------------------------------|
+	// `
 	Log.Stdout(msg + "\nLOGS:")
 	TLSCert, _, err := ssl.GenerateSelfSigned()
 	if err != nil {
@@ -63,7 +66,6 @@ func main() {
 	}
 	Log.Info("WebPty is ready to go")
 
-	go setupTunnel()
 	if err := (&http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      mux,
@@ -106,61 +108,4 @@ func getAddress() []string {
 		}
 	}
 	return ips
-}
-
-func setupTunnel() error {
-	proxyURL := "ws://localhost:8123/connect"
-	tenant := "test"
-
-	rootCtx := context.Background()
-	dialer := &websocket.Dialer{Proxy: http.ProxyFromEnvironment, HandshakeTimeout: remotedialer.HandshakeTimeOut}
-	ws, resp, err := dialer.DialContext(
-		rootCtx, proxyURL,
-		http.Header{"X-Machine-ID": []string{tenant}},
-	)
-	if err != nil {
-		if resp == nil {
-			Log.Error("Failed to connect to proxy")
-			return err
-		} else {
-			rb, err2 := ioutil.ReadAll(resp.Body)
-			if err2 != nil {
-				Log.Error("Failed to connect to proxy. Response status: %v - %v. Couldn't read response body (err: %v)", resp.StatusCode, resp.Status, err2)
-			} else {
-				Log.Error("Failed to connect to proxy. Response status: %v - %v. Response body: %s", resp.StatusCode, resp.Status, rb)
-			}
-		}
-		return err
-	}
-	defer ws.Close()
-
-	result := make(chan error, 1)
-	ctx, cancel := context.WithCancel(rootCtx)
-	defer cancel()
-	session := remotedialer.NewClientSession(
-		func(proto, address string) bool { return true },
-		ws,
-	)
-	defer session.Close()
-	go func() {
-		Log.Info("setting up tunnel to WebPty")
-		_, err = session.Serve(ctx)
-		result <- err
-	}()
-
-	select {
-	case <-ctx.Done():
-		Log.Info("Proxy done - url[%s] err[%+v]", proxyURL, ctx.Err())
-		return ctx.Err()
-	case err := <-result:
-		rerr, ok := err.(*websocket.CloseError)
-		if ok == false {
-			Log.Error("Session serve err - url[%s] err[%s]", proxyURL, err.Error())
-		} else if rerr.Code == 1006 {
-			Log.Info("Proxy has disconnected")
-		} else {
-			Log.Error("Session serve code[%d] msg[%s]", rerr.Code, rerr.Text)
-		}
-		return err
-	}
 }
