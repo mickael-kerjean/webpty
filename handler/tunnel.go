@@ -2,24 +2,27 @@ package handler
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"github.com/gorilla/websocket"
 	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/rancher/remotedialer"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"time"
 )
 
-var TunnelURL string
+var (
+	TunnelURL    string
+	TunnelServer string = "localhost:8123"
+)
 
 func SetupTunnel(res http.ResponseWriter, req *http.Request) {
-	tenant := "test"
-	proxy := "localhost:8123"
-
-	TunnelURL = fmt.Sprintf("http://%s/%s/", proxy, tenant)
+	tenant := RandomString(5)
+	TunnelURL = fmt.Sprintf("http://%s/%s/", TunnelServer, tenant)
 	go func() {
-		if err := setup(proxy, tenant); err != nil {
+		if err := setup(TunnelServer, tenant); err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte(err.Error()))
 			return
@@ -94,4 +97,20 @@ func setup(url string, tenant string) error {
 		}
 	}
 	return nil
+}
+
+var Letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
+
+func RandomString(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		max := *big.NewInt(int64(len(Letters)))
+		r, err := rand.Int(rand.Reader, &max)
+		if err != nil {
+			b[i] = Letters[0]
+		} else {
+			b[i] = Letters[r.Int64()]
+		}
+	}
+	return string(b)
 }

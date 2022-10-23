@@ -7,6 +7,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	. "github.com/mickael-kerjean/webpty/common"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/rancher/remotedialer"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -139,6 +143,7 @@ func main() {
 	router := mux.NewRouter()
 	router.Handle("/connect", handler)
 	router.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) { rw.Write(htmlHome) })
+	router.Handle("/metrics", promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}))
 	router.HandleFunc("/{tenant}/{path:.*}", func(rw http.ResponseWriter, req *http.Request) {
 		vars := mux.Vars(req)
 		if req.Header.Get("Connection") == "Upgrade" {
