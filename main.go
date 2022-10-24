@@ -52,12 +52,12 @@ func main() {
 	for _, url := range getAddress() {
 		msg += fmt.Sprintf("    - %s\n", url)
 	}
-	// 	msg += `
-	//   |---------------------------------------------------------|
-	//   | Create a public link even though your server is behind  |
-	//   | NAT or a firewall: https://127.0.0.1:3456/setup         |
-	//   |---------------------------------------------------------|
-	// `
+	msg += `
+	  |---------------------------------------------------------|
+	  | Create a public link even though your server is behind  |
+	  | NAT or a firewall: https://127.0.0.1:3456/setup         |
+	  |---------------------------------------------------------|
+	`
 	Log.Stdout(msg + "\nLOGS:")
 	TLSCert, _, err := ssl.GenerateSelfSigned()
 	if err != nil {

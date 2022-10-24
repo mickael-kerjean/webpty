@@ -7,4 +7,5 @@ import (
 var (
 	ErrNotFound      = errors.New("Page Not Found")
 	ErrNotAuthorized = errors.New("Not Authorized")
+	ErrNotAvailable  = errors.New("Not Available")
 )
