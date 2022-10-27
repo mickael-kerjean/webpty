@@ -1,4 +1,4 @@
-package handler
+package ctrl
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 
 var (
 	TunnelURL    string
-	TunnelServer string = "static.194.172.130.94.clients.your-server.de:8123"
+	TunnelServer string = "localhost:8123"
 	TunnelDate   time.Time
 )
 
@@ -23,7 +23,7 @@ func SetupTunnel(res http.ResponseWriter, req *http.Request) {
 	tenant := RandomString(5)
 	TunnelURL = fmt.Sprintf("http://%s/%s/", TunnelServer, tenant)
 	go func() {
-		if err := setup(TunnelServer, tenant, 0); err != nil {
+		if err := setup(TunnelServer, tenant, GetMachineInfo(), 0); err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte(err.Error()))
 			return
@@ -60,7 +60,7 @@ func RedirectTunnel(res http.ResponseWriter, req *http.Request) {
     })()`))
 }
 
-func setup(url string, tenant string, retry int) error {
+func setup(url string, tenant string, info string, retry int) error {
 	if retry > 100 {
 		return ErrNotAvailable
 	}
@@ -69,13 +69,16 @@ func setup(url string, tenant string, retry int) error {
 	dialer := &websocket.Dialer{Proxy: http.ProxyFromEnvironment, HandshakeTimeout: remotedialer.HandshakeTimeOut}
 	ws, resp, err := dialer.DialContext(
 		rootCtx, proxyURL,
-		http.Header{"X-Machine-ID": []string{tenant}},
+		http.Header{
+			"X-Machine-ID":   []string{tenant},
+			"X-Machine-Info": []string{info},
+		},
 	)
 	if err != nil {
 		if resp == nil {
 			Log.Error("Failed to connect to proxy. Reconnecting ....")
 			time.Sleep(time.Duration(retry*5) * time.Second)
-			setup(url, tenant, retry+1)
+			setup(url, tenant, info, retry+1)
 			return err
 		} else {
 			rb, err2 := ioutil.ReadAll(resp.Body)
@@ -114,7 +117,7 @@ func setup(url string, tenant string, retry int) error {
 		} else if rerr.Code == 1006 {
 			Log.Info("Proxy has disconnected. Reconnecting ....")
 			time.Sleep(time.Duration(retry*5) * time.Second)
-			setup(url, tenant, retry+1)
+			setup(url, tenant, info, retry+1)
 		} else {
 			Log.Error("Session serve code[%d] msg[%s]", rerr.Code, rerr.Text)
 		}

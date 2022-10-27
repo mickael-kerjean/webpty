@@ -6,38 +6,20 @@ import (
 	"fmt"
 	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/mickael-kerjean/webpty/common/ssl"
-	. "github.com/mickael-kerjean/webpty/handler"
+	"github.com/mickael-kerjean/webpty/ctrl"
 	"net"
 	"net/http"
 )
 
 var port int = 3456
 
-//go:embed .assets/favicon.ico
-var IconFavicon []byte
-
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/healthz", func(res http.ResponseWriter, req *http.Request) {
-		res.WriteHeader(200)
-	})
-	mux.HandleFunc("/favicon.ico", func(res http.ResponseWriter, req *http.Request) {
-		res.WriteHeader(200)
-		res.Write(IconFavicon)
-	})
-	mux.HandleFunc("/", Middleware(func(res http.ResponseWriter, req *http.Request) {
-		if req.URL.Path == "/socket" {
-			HandleSocket(res, req)
-			return
-		} else if req.Method == "GET" {
-			HandleStatic(res, req)
-			return
-		}
-		ErrorPage(res, ErrNotFound, 404)
-		return
-	}))
-	mux.HandleFunc("/setup", SetupTunnel)
-	mux.HandleFunc("/tunnel.js", RedirectTunnel)
+	mux.HandleFunc("/", ctrl.Main)
+	mux.HandleFunc("/setup", ctrl.SetupTunnel)
+	mux.HandleFunc("/tunnel.js", ctrl.RedirectTunnel)
+	mux.HandleFunc("/healthz", ctrl.HealthCheck)
+	mux.HandleFunc("/favicon.ico", ctrl.ServeFavicon)
 
 	msg := `
     ██╗    ██╗███████╗██████╗ ██████╗ ████████╗██╗   ██╗
@@ -52,12 +34,6 @@ func main() {
 	for _, url := range getAddress() {
 		msg += fmt.Sprintf("    - %s\n", url)
 	}
-	msg += `
-	  |---------------------------------------------------------|
-	  | Create a public link even though your server is behind  |
-	  | NAT or a firewall: https://127.0.0.1:3456/setup         |
-	  |---------------------------------------------------------|
-	`
 	Log.Stdout(msg + "\nLOGS:")
 	TLSCert, _, err := ssl.GenerateSelfSigned()
 	if err != nil {

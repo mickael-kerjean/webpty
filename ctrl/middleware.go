@@ -1,4 +1,4 @@
-package handler
+package ctrl
 
 import (
 	. "github.com/mickael-kerjean/webpty/common"
@@ -33,8 +33,13 @@ func Middleware(fn func(res http.ResponseWriter, req *http.Request)) func(res ht
 			ErrorPage(res, ErrNotAuthorized, http.StatusUnauthorized)
 			return
 		}
-
 		if _, found := tmpCache.Get(username + ":" + password); found == false {
+			var err error = nil
+			// if username != "test" || password != "test" {
+			// 	ErrorPage(res, ErrNotAuthorized, http.StatusUnauthorized)
+			// 	err = ErrNotAuthorized
+			// 	return
+			// }
 			client, err := ssh.Dial("tcp", "127.0.0.1:22", &ssh.ClientConfig{
 				User: username,
 				Auth: []ssh.AuthMethod{ssh.Password(password)},

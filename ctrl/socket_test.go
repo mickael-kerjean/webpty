@@ -1,4 +1,4 @@
-package handler
+package ctrl
 
 import (
 	"github.com/stretchr/testify/assert"

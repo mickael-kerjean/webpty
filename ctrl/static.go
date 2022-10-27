@@ -1,4 +1,4 @@
-package handler
+package ctrl
 
 import (
 	"embed"
@@ -11,7 +11,6 @@ import (
 )
 
 //go:generate bash static.sh
-
 //go:embed src
 var efs embed.FS
 
@@ -99,4 +98,17 @@ func ServeFile(res http.ResponseWriter, req *http.Request, filePath string) {
 	}
 	io.Copy(res, file)
 	file.Close()
+}
+
+//go:embed src/favicon.ico
+var IconFavicon []byte
+
+func ServeFavicon(res http.ResponseWriter, req *http.Request) {
+	res.WriteHeader(200)
+	res.Write(IconFavicon)
+}
+
+func HealthCheck(res http.ResponseWriter, req *http.Request) {
+	res.Write([]byte("OK"))
+	res.WriteHeader(200)
 }
