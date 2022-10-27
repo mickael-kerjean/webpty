@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+    <meta charset="UTF-8">
+    <title>WebFleet</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="">
+    <style>
+     body {
+         background: #1d1f21;
+         font-family: Monaco, monospace;
+         font-size: 16px;
+     }
+     .container {
+         max-width: 1300px;
+         margin: 0 auto;
+     }
+     h1 {
+         color: #707880;
+         padding: 0 10px;
+         margin-bottom: 30px;
+     }
+     h1:after {
+         content: '';
+         display: block;
+         height: 5px;
+         width: 70px;
+         background: #707880;
+         position: relative;
+         top: 4px;
+     }
+     .server-list {
+         display: flex;
+         flex-wrap: wrap;
+     }
+     .box {
+         position: relative;
+         font-weight: bold;
+         background: #373b41;
+         color: #c5c8c6;
+         padding: 10px;
+         border-radius: 2px;
+         margin: 5px;
+         width: calc(33.3% - 30px);
+         text-decoration: none;
+     }
+     .box .online {
+         height: 10px;
+         width: 10px;
+         background: red;
+         position: absolute;
+         bottom: 10px;
+         right: 10px;
+         border-radius: 50%;
+     }
+     .box .online.on { background: #5fa88d; }
+     .box .online.off { background: #cc645a; }
+     @media screen and (max-width: 1000px) {
+         .box {
+             width: calc(50% - 30px);
+         }
+     }
+     @media screen and (max-width: 600px) {
+         .box {
+             width: calc(100% - 26px);
+             margin: 5px 0;
+         }
+     }
+     .box .hostname {
+         color: #81a2be;
+         white-space: nowrap;
+         overflow: hidden;
+         text-overflow: ellipsis;
+     }
+    </style>
+    <body>
+        <div class="container">
+            <h1>Servers</h1>
+            <div class="server-list"></div>
+            <script>
+             const servers = [
+                 {
+                     id: "gjis6",
+                     hostname: "mickael",
+                     os: "Ubuntu 21.04",
+                     kernel: "Linux 5.11.0-49-generic",
+                     arch: "x86-64",
+                     publicIp: "127.0.0.1",
+                     privateIp: "127.0.0.1",
+                     isOnline: true,
+                 },
+                 {
+                     id: "",
+                     hostname: "awuavadmx01.citc.health.nsw.gov.au",
+                     os: "Oracle Linux Server 7.9",
+                     kernel: "Linux 5.4.17-2135.311.6.el7uek.x86_64",
+                     arch: "x86_64",
+                     publicIp: "127.0.0.1",
+                     privateIp: "127.0.0.1",
+                     isOnline: false,
+                 },
+                 {
+                     id: "",
+                     hostname: "pi",
+                     os: "Raspbian GNU/Linux 10 (buster)",
+                     kernel: "Kernel: Linux 5.10.103-v7+",
+                     arch: "arm",
+                     publicIP: "127.0.0.1",
+                     privateIP: "127.0.0.1",
+                     isOnline: true,
+                 },
+                 {
+                     id: "4iev1",
+                     hostname: "EHL5CG00917SY",
+                     os: "Ubuntu 20.04.1 LTS",
+                     arch: "x86_64",
+                     publicIP: "127.0.0.1",
+                     privateIP: "127.0.0.1",
+                     isOnline: true,
+                 },
+                 {
+                     id: "4iev1",
+                     hostname: "rick",
+                     os: "Ubuntu 18.04.5 LTS",
+                     arch: "x86_64",
+                     publicIP: "127.0.0.1",
+                     privateIP: "127.0.0.1",
+                     isOnline: true,
+                 }
+             ].sort((a, b) => {
+                 let scoreA = 0, scoreB = 0;
+                 if (a.isOnline === false) scoreA = -1;
+                 if (b.isOnline === false) scoreB = -1;
+                 return scoreB - scoreA;
+             });
+             const $list = document.querySelector(".server-list");
+             servers.forEach((server) => {
+                 let $el = document.createElement("a");
+                 $el.setAttribute("class", "box");
+                 $el.setAttribute("href", `./${server.id}/`);
+                 const divCreator = (content, className) => {
+                     let $div = document.createElement("div");
+                     $div.setAttribute("class", className);
+                     $div.innerText = content;
+                     $el.appendChild($div);
+                 };
+                 Object.keys(server).forEach((key) => {
+                     if (key === "id") return;
+                     else if (key === "isOnline") return;
+                     else if (key === "hostname") divCreator(`${server[key]}`, key);
+                     else divCreator(`${key}: ${server[key]}`, key);
+                 });
+                 divCreator("", "online " + (server.isOnline ? "on" : "off"));
+                 $list.appendChild($el);
+             });
+            </script>
+
+            <p class="quick-guide">
+              To add new servers, install webpty on your server and visit<br/> https://localhost:3456/setup?srv=<span id="bind-address"></span>
+            </p>
+            <style>
+             .quick-guide {
+                 color: #c5c8c6;
+                 text-align: center;
+                 margin-top: 50px;
+             }
+            </style>
+            <script>
+             document.getElementById("bind-address").innerText = location.host;
+            </script>
+        </div>
+
+
+        <script>
+         setTimeout(() => location.reload(), 2000)
+        </script>
+    </body>
+</html>
