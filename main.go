@@ -7,7 +7,6 @@ import (
 	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/mickael-kerjean/webpty/common/ssl"
 	"github.com/mickael-kerjean/webpty/ctrl"
-	"net"
 	"net/http"
 )
 
@@ -31,8 +30,8 @@ func main() {
 
     Web Interface:
 `
-	for _, url := range getAddress() {
-		msg += fmt.Sprintf("    - %s\n", url)
+	for _, url := range GetAddress() {
+		msg += fmt.Sprintf("    - https://%s:%d\n", url, port)
 	}
 	Log.Stdout(msg + "\nLOGS:")
 	TLSCert, _, err := ssl.GenerateSelfSigned()
@@ -67,21 +66,4 @@ func main() {
 	}).ListenAndServeTLS("", ""); err != nil {
 		Log.Error("[https]: listen_serve %v", err)
 	}
-}
-
-func getAddress() []string {
-	ips := []string{}
-
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ips
-	}
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok {
-			if ipnet.IP.To4() != nil {
-				ips = append(ips, fmt.Sprintf("https://%s:%d", ipnet.IP.String(), port))
-			}
-		}
-	}
-	return ips
 }

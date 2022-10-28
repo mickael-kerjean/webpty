@@ -37,6 +37,10 @@ func HandleStatic(res http.ResponseWriter, req *http.Request) {
 }
 
 func ErrorPage(res http.ResponseWriter, err error, code int) {
+	if err == nil {
+		ErrorPage(res, ErrNotValid, 500)
+		return
+	}
 	res.WriteHeader(code)
 	tmpl, _ := template.
 		New("handler::static").

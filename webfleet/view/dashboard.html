@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+    <meta charset="UTF-8">
+    <title>WebFleet</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="">
+    <style>
+     body {
+         background: #1d1f21;
+         font-family: Monaco, monospace;
+         font-size: 16px;
+     }
+     .container {
+         max-width: 1300px;
+         margin: 0 auto;
+     }
+     h1 {
+         color: #707880;
+         padding: 0 10px;
+         margin-bottom: 30px;
+     }
+     h1:after {
+         content: '';
+         display: block;
+         height: 5px;
+         width: 70px;
+         background: #707880;
+         position: relative;
+         top: 4px;
+     }
+     .server-list {
+         display: flex;
+         flex-wrap: wrap;
+     }
+     .box {
+         position: relative;
+         font-weight: bold;
+         background: #373b41;
+         color: #c5c8c6;
+         padding: 10px;
+         border-radius: 2px;
+         margin: 5px;
+         width: calc(33.3% - 30px);
+         text-decoration: none;
+     }
+     .box .online {
+         height: 10px;
+         width: 10px;
+         background: red;
+         position: absolute;
+         bottom: 10px;
+         right: 10px;
+         border-radius: 50%;
+     }
+     .box .online.on { background: #5fa88d; }
+     .box .online.off { background: #cc645a; }
+     @media screen and (max-width: 1000px) {
+         .box {
+             width: calc(50% - 30px);
+         }
+     }
+     @media screen and (max-width: 600px) {
+         .box {
+             width: calc(100% - 26px);
+             margin: 5px 0;
+         }
+     }
+     .box .hostname {
+         color: #81a2be;
+     }
+     .box > div {
+         white-space: nowrap;
+         overflow: hidden;
+         text-overflow: ellipsis;
+     }
+    </style>
+    <body>
+        <div class="container">
+            <h1>Servers</h1>
+            <div class="server-list">
+              {{ range $idx, $server := .servers }}
+                <div class="box">
+			      <div class="hostname">{{ $server.Hostname }}</div>
+                  <div>os: <span>{{ $server.Os }}</span></div>
+                  <div>kernel: {{ $server.Kernel }}</div>
+                  <div>arch: {{ $server.Arch }}</div>
+                  <div>public IP: {{ $server.PublicIP }}</div>
+                  <div>private IP: {{ $server.PrivateIP }}</div>
+                  <div class="online on"></div>
+                </div>
+			  {{ end }}
+            </div>
+
+            <p class="quick-guide">
+              To add new servers, install webpty on your server and visit<br/> https://localhost:3456/setup?srv=<span id="bind-address"></span>
+            </p>
+            <style>
+             .quick-guide {
+                 color: #c5c8c6;
+                 text-align: center;
+                 margin-top: 50px;
+             }
+            </style>
+            <script>
+             document.getElementById("bind-address").innerText = location.host;
+            </script>
+        </div>
+
+
+        <script>
+          function run() {
+              fetch(location.href).then((res) => res.text()).then((e) => {
+                  let $tmp = document.createElement("div");
+                  $tmp.innerHTML = e;
+                  $original = document.querySelector(".server-list");
+                  $new = $tmp.querySelector(".server-list");
+                  if ($original.innerHTML !== $new.innerHTML) {
+                      $original.innerHTML = $new.innerHTML;
+                  }
+                  $tmp.remove();
+                  setTimeout(run, 1000);
+              }).catch((err) => {
+                  console.log(err);
+                  setTimeout(run, 1000);
+              });
+          }
+          setTimeout(run, 1000);
+        </script>
+    </body>
+</html>

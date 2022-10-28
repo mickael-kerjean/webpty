@@ -99,5 +99,15 @@
          Boot();
      })()
     </script>
+    <script>
+      (function() {
+          if(location.port !== 3456) return
+
+          let $a = document.createElement("a");
+          $a.innerText = "*";
+          $a.setAttribute("class", "back");
+          document.body.appendChild($a);
+      })()
+    </script>
   </body>
 </html>
