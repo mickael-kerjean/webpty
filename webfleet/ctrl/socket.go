@@ -2,6 +2,7 @@ package ctrl
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -142,7 +143,10 @@ func ClientHTTP(rw http.ResponseWriter, req *http.Request, dialer remotedialer.D
 
 func TunnelConnect(res http.ResponseWriter, req *http.Request) {
 	id := req.Header.Get("x-machine-id")
-	model.Machines.Add(id, map[string]interface{}{})
+	jsonStr := req.Header.Get("x-machine-info")
+	data := map[string]interface{}{}
+	json.Unmarshal([]byte(jsonStr), &data)
+	model.Machines.Add(id, data)
 	srv.ServeHTTP(res, req)
 }
 

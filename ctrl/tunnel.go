@@ -60,7 +60,7 @@ func RedirectTunnel(res http.ResponseWriter, req *http.Request) {
     })()`))
 }
 
-func setup(url string, tenant string, info string, retry int) error {
+func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 	if retry > 100 {
 		return ErrNotAvailable
 	}
@@ -71,14 +71,14 @@ func setup(url string, tenant string, info string, retry int) error {
 		rootCtx, proxyURL,
 		http.Header{
 			"X-Machine-ID":   []string{tenant},
-			"X-Machine-Info": []string{info},
+			"X-Machine-Info": []string{string(jsonInfo)},
 		},
 	)
 	if err != nil {
 		if resp == nil {
 			Log.Error("Failed to connect to proxy. Reconnecting ....")
 			time.Sleep(time.Duration(retry*5) * time.Second)
-			setup(url, tenant, info, retry+1)
+			setup(url, tenant, jsonInfo, retry+1)
 			return err
 		} else {
 			rb, err2 := ioutil.ReadAll(resp.Body)
@@ -117,7 +117,7 @@ func setup(url string, tenant string, info string, retry int) error {
 		} else if rerr.Code == 1006 {
 			Log.Info("Proxy has disconnected. Reconnecting ....")
 			time.Sleep(time.Duration(retry*5) * time.Second)
-			setup(url, tenant, info, retry+1)
+			setup(url, tenant, jsonInfo, retry+1)
 		} else {
 			Log.Error("Session serve code[%d] msg[%s]", rerr.Code, rerr.Text)
 		}
