@@ -55,10 +55,20 @@
                  fontFamily: "monaco, monospace",
              });
              term.loadAddon(fitAddon);
+             term.open(document.getElementById("terminal"));
+             fitAddon.fit();
+
+             if (location.protocol !== "https:") {
+                 term.writeln("You need to use https to access WebPty");
+                 websocket.close();
+                 return;
+             }
+
+             window.onresize = function() {
+                 fitAddon.fit();
+             }
 
              websocket.onopen = function(e) {
-                 term.open(document.getElementById("terminal"));
-                 fitAddon.fit();
                  term.onData(function(data) {
                      websocket.send(new TextEncoder().encode("\x00" + data));
                      websocket.send(new TextEncoder().encode("\x01" + JSON.stringify({cols: term.cols, rows: term.rows})))
@@ -67,9 +77,6 @@
                      fitAddon.fit();
                      websocket.send(new TextEncoder().encode("\x01" + JSON.stringify({cols: evt.cols, rows: evt.rows})))
                  });
-                 window.onresize = function() {
-                     fitAddon.fit();
-                 }
                  term.onTitleChange(function(title) {
                      document.title = title;
                  });
@@ -96,18 +103,9 @@
                  // term.dispose();
              }
          }
+
          Boot();
      })()
-    </script>
-    <script>
-      (function() {
-          if(location.port !== 3456) return
-
-          let $a = document.createElement("a");
-          $a.innerText = "*";
-          $a.setAttribute("class", "back");
-          document.body.appendChild($a);
-      })()
     </script>
   </body>
 </html>
