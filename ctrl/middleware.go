@@ -54,7 +54,7 @@ func Middleware(fn func(res http.ResponseWriter, req *http.Request)) func(res ht
 				scanner := bufio.NewScanner(file)
 				for scanner.Scan() {
 					line := strings.TrimSpace(scanner.Text())
-					prefix := "#Port"
+					prefix := "Port"
 					if strings.HasPrefix(line, prefix) {
 						n, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(line, prefix)))
 						if err != nil {
