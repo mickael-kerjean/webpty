@@ -1,11 +1,16 @@
 package ctrl
 
 import (
+	"bufio"
+	"fmt"
 	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/crypto/ssh"
 	"net"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -40,7 +45,29 @@ func Middleware(fn func(res http.ResponseWriter, req *http.Request)) func(res ht
 			// 	err = ErrNotAuthorized
 			// 	return
 			// }
-			client, err := ssh.Dial("tcp", "127.0.0.1:22", &ssh.ClientConfig{
+			sshPort := func() int {
+				p := 22
+				file, err := os.OpenFile("/etc/ssh/sshd_config", os.O_RDONLY, os.ModePerm)
+				if err != nil {
+					return p
+				}
+				scanner := bufio.NewScanner(file)
+				for scanner.Scan() {
+					line := strings.TrimSpace(scanner.Text())
+					prefix := "#Port"
+					if strings.HasPrefix(line, prefix) {
+						n, err := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(line, prefix)))
+						if err != nil {
+							Log.Error("sshd cannot parse port from /etc/ssh/sshd_config")
+						}
+						p = n
+						break
+					}
+				}
+				file.Close()
+				return p
+			}()
+			client, err := ssh.Dial("tcp", fmt.Sprintf("127.0.0.1:%d", sshPort), &ssh.ClientConfig{
 				User: username,
 				Auth: []ssh.AuthMethod{ssh.Password(password)},
 				HostKeyCallback: func(hostname string, remote net.Addr, key ssh.PublicKey) error {
