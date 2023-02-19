@@ -8,9 +8,19 @@ import (
 	"github.com/mickael-kerjean/webpty/common/ssl"
 	"github.com/mickael-kerjean/webpty/ctrl"
 	"net/http"
+	"os"
+	"strconv"
 )
 
 var port int = 3456
+
+func init() {
+	if pStr := os.Getenv("PORT"); pStr != "" {
+		if pInt, err := strconv.Atoi(pStr); err == nil {
+			port = pInt
+		}
+	}
+}
 
 func main() {
 	mux := http.NewServeMux()
