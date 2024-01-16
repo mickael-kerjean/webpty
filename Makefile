@@ -6,5 +6,5 @@ test:
 	go tool cover -html dist/cover.out -o dist/cover.html
 
 tunnel:
-	docker build -f ./tunnel/Dockerfile -t machines/webpty-tunnel:latest .
+	docker build -f ./webfleet/Dockerfile -t machines/webpty-tunnel:latest .
 	docker push machines/webpty-tunnel:latest
