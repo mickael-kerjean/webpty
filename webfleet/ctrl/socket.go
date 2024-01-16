@@ -91,7 +91,6 @@ func ClientSocket(rw http.ResponseWriter, req *http.Request, dialer remotedialer
 				Log.Error("WS(read) WriteMessage ERR: %v", err.Error())
 				return
 			}
-			Log.Info("WS OUT %s", url)
 		}
 	}()
 	for {
@@ -105,7 +104,6 @@ func ClientSocket(rw http.ResponseWriter, req *http.Request, dialer remotedialer
 			Log.Error("WS(write) WriteMessage ERR: %s", err.Error())
 			return
 		}
-		Log.Info("WS IN %s", url)
 	}
 	return
 }
