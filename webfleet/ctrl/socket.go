@@ -128,8 +128,8 @@ func ClientHTTP(rw http.ResponseWriter, req *http.Request, dialer remotedialer.D
 		},
 	}).Do(r)
 	if err != nil {
-		Log.Error("REQ ERR %s: %s", url, err.Error())
-		remotedialer.DefaultErrorWriter(rw, req, 500, err)
+		rw.WriteHeader(http.StatusNotFound)
+		rw.Write([]byte(err.Error()))
 		return
 	}
 	defer resp.Body.Close()
