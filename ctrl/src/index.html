@@ -58,7 +58,7 @@
              term.open(document.getElementById("terminal"));
              fitAddon.fit();
 
-             if (location.protocol !== "https:") {
+             if (location.pathname == "/" && location.protocol !== "https:") {
                  term.writeln("You need to use https to access WebPty");
                  websocket.close();
                  return;

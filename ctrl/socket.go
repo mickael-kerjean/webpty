@@ -3,15 +3,19 @@ package ctrl
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/creack/pty"
-	"github.com/gorilla/websocket"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"syscall"
 	"unsafe"
+
+	. "github.com/mickael-kerjean/webpty/common"
+
+	"github.com/creack/pty"
+	"github.com/gorilla/websocket"
 )
 
 var upgrader = websocket.Upgrader{
@@ -36,7 +40,9 @@ func HandleSocket(res http.ResponseWriter, req *http.Request) {
 	defer conn.Close()
 
 	var cmd *exec.Cmd
-	if _, err = exec.LookPath("/bin/bash"); err == nil {
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd")
+	} else if _, err = exec.LookPath("/bin/bash"); err == nil {
 		bashCommand := `bash --noprofile --init-file <(cat <<EOF
 export TERM="xterm"
 export PS1="\[\033[1;34m\]\w\[\033[0;37m\] # \[\033[0m\]"
@@ -63,6 +69,7 @@ EOF
 	} else {
 		res.WriteHeader(http.StatusNotFound)
 		res.Write([]byte("No terminal found"))
+		Log.Error("No terminal found")
 		return
 	}
 
@@ -110,8 +117,14 @@ EOF
 
 		switch dataTypeBuf[0] {
 		case 0:
-			if _, err := io.Copy(tty, reader); err != nil {
+			b, err := io.ReadAll(reader)
+			if err != nil {
 				conn.WriteMessage(websocket.TextMessage, []byte("Error copying bytes: "+err.Error()))
+				continue
+			}
+			_, err = tty.Write(b)
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte("Error writing bytes: "+err.Error()))
 				continue
 			}
 		case 1:

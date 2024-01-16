@@ -115,7 +115,7 @@
             {{ end }}
             <div class="server-list">
               {{ range $idx, $server := .servers }}
-                <a class="box" href="{{ $server.Id }}/">
+                <a class="box" href="/{{ $server.Id }}/">
 			      <div class="hostname">{{ $server.Hostname }}</div>
                   <div>os: <span>{{ $server.Os }}</span></div>
                   <div>kernel: {{ $server.Kernel }}</div>
@@ -126,7 +126,7 @@
             </div>
 
             <p class="quick-guide">
-              To add new servers, install webpty on your server and visit<br/> https://localhost:3456/setup?srv=<span id="bind-address"></span>
+              To add new servers, install webpty on your server and visit<br/> /setup?srv=<span id="bind-address"></span>
             </p>
             <style>
              .quick-guide {

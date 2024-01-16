@@ -3,27 +3,30 @@ package ctrl
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
 	"fmt"
-	"github.com/gorilla/websocket"
-	. "github.com/mickael-kerjean/webpty/common"
-	"github.com/rancher/remotedialer"
 	"io/ioutil"
 	"math/big"
 	"net/http"
 	"time"
+
+	. "github.com/mickael-kerjean/webpty/common"
+
+	"github.com/gorilla/websocket"
+	"github.com/rancher/remotedialer"
 )
 
 var (
-	TunnelURL    string
-	TunnelServer string = "localhost:8123"
-	TunnelDate   time.Time
+	TunnelURL  string
+	TunnelDate time.Time
 )
 
 func SetupTunnel(res http.ResponseWriter, req *http.Request) {
 	tenant := RandomString(5)
-	TunnelURL = fmt.Sprintf("http://%s/%s/", TunnelServer, tenant)
+	tunnelServer := req.URL.Query().Get("srv")
+	TunnelURL = fmt.Sprintf("http://%s/%s/", tunnelServer, tenant)
 	go func() {
-		if err := setup(TunnelServer, tenant, GetMachineInfo(), 0); err != nil {
+		if err := setup(tunnelServer, tenant, GetMachineInfo(), 0); err != nil {
 			res.WriteHeader(500)
 			res.Write([]byte(err.Error()))
 			return
@@ -66,7 +69,11 @@ func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 	}
 	proxyURL := fmt.Sprintf("ws://%s/connect", url)
 	rootCtx := context.Background()
-	dialer := &websocket.Dialer{Proxy: http.ProxyFromEnvironment, HandshakeTimeout: remotedialer.HandshakeTimeOut}
+	dialer := &websocket.Dialer{
+		Proxy:            http.ProxyFromEnvironment,
+		HandshakeTimeout: remotedialer.HandshakeTimeOut,
+		TLSClientConfig:  &tls.Config{InsecureSkipVerify: true},
+	}
 	ws, resp, err := dialer.DialContext(
 		rootCtx, proxyURL,
 		http.Header{
@@ -76,7 +83,7 @@ func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 	)
 	if err != nil {
 		if resp == nil {
-			Log.Error("Failed to connect to proxy. Reconnecting ....")
+			Log.Error("Failed to connect to proxy. Reconnecting proxy[%s] err[%s] ....", proxyURL, err.Error())
 			time.Sleep(time.Duration(retry*5) * time.Second)
 			setup(url, tenant, jsonInfo, retry+1)
 			return err
