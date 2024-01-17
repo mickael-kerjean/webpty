@@ -39,8 +39,12 @@ func main() {
 
     Web Interface:
 `
-	for _, url := range GetAddress() {
-		msg += fmt.Sprintf("    - https://%s:%d\n", url, port)
+	if FLEET_MODE {
+		msg += fmt.Sprintf("    - https://%s\n", FLEET_SRV)
+	} else {
+		for _, url := range GetAddress() {
+			msg += fmt.Sprintf("    - https://%s:%d\n", url, port)
+		}
 	}
 	Log.Stdout(msg + "\nLOGS:")
 	TLSCert, _, err := ssl.GenerateSelfSigned()
@@ -49,7 +53,16 @@ func main() {
 		return
 	}
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", port),
+		Addr: fmt.Sprintf(
+			"%s:%d",
+			func() string {
+				if FLEET_MODE {
+					return "0.0.0.0"
+				}
+				return "127.0.0.1"
+			}(),
+			port,
+		),
 		Handler:      mux,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 		TLSConfig: &tls.Config{
@@ -71,9 +84,9 @@ func main() {
 		},
 		ErrorLog: NewNilLogger(),
 	}
-	if remote := os.Getenv("FLEET"); remote != "" {
+	if FLEET_MODE {
 		go func() {
-			if _, err = ctrl.InitTunnel(remote); err != nil {
+			if _, err = ctrl.InitTunnel(FLEET_SRV); err != nil {
 				Log.Error("WebPty tunnel couldn't be established ...")
 				srv.Close()
 				return

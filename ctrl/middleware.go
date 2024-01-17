@@ -3,7 +3,6 @@ package ctrl
 import (
 	"bufio"
 	"fmt"
-	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/patrickmn/go-cache"
 	"golang.org/x/crypto/ssh"
 	"net"
@@ -12,10 +11,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	. "github.com/mickael-kerjean/webpty/common"
 )
 
 func Middleware(fn func(res http.ResponseWriter, req *http.Request)) func(res http.ResponseWriter, req *http.Request) {
 	tmpCache := cache.New(5*time.Minute, 10*time.Minute)
+	if FLEET_MODE {
+		return fn
+	}
 	return func(res http.ResponseWriter, req *http.Request) {
 		startTime := time.Now()
 		username, password, ok := req.BasicAuth()
