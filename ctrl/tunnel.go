@@ -11,50 +11,48 @@ import (
 	"time"
 
 	. "github.com/mickael-kerjean/webpty/common"
+	"github.com/mickael-kerjean/webpty/webfleet/model"
 
 	"github.com/gorilla/websocket"
 	"github.com/rancher/remotedialer"
 )
 
 var (
-	TunnelURL  string
-	TunnelDate time.Time
+	tunnelURL  string
+	tunnelDate time.Time
 )
 
-func SetupTunnel(res http.ResponseWriter, req *http.Request) {
+func InitTunnel(tunnelServer string) (string, error) {
 	tenant := RandomString(5)
-	tunnelServer := req.URL.Query().Get("srv")
-	TunnelURL = fmt.Sprintf("http://%s/%s/", tunnelServer, tenant)
+	tunnelURL = fmt.Sprintf("http://%s/%s/", tunnelServer, tenant)
 	go func() {
-		if err := setup(tunnelServer, tenant, GetMachineInfo(), 0); err != nil {
-			res.WriteHeader(500)
-			res.Write([]byte(err.Error()))
+		if err := setup(tunnelServer, tenant, model.GetMachineInfo(), 0); err != nil {
+			Log.Error("setup tunnel failed %s", err.Error())
 			return
 		}
 	}()
-	for i := 0; i < 10; i++ {
-		time.Sleep(100 * time.Millisecond)
-		resp, err := http.Get(TunnelURL + "healthz")
+	for i := 0; i < 50; i++ {
+		time.Sleep(1000 * time.Millisecond)
+		resp, err := http.Get(tunnelURL + "healthz")
 		if err != nil {
 			continue
 		} else if resp.StatusCode != 200 {
 			continue
 		}
-		http.Redirect(res, req, TunnelURL, http.StatusSeeOther)
-		return
+		Log.Debug("tunnel established")
+		return tunnelServer, nil
 	}
-	ErrorPage(res, ErrNotFound, 404)
-	return
+	return "", ErrNotFound
 }
 
 func RedirectTunnel(res http.ResponseWriter, req *http.Request) {
-	if TunnelURL == "" {
+	if tunnelURL == "" {
 		res.Write([]byte(""))
 		return
 	}
 	res.Write([]byte(`
     (function() {
-        const tunnelURL = "` + TunnelURL + `"; // server generated
+        const tunnelURL = "` + tunnelURL + `"; // server generated
         switch(tunnelURL) {
             case "": return;
             case location.href: return;
@@ -83,7 +81,7 @@ func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 	)
 	if err != nil {
 		if resp == nil {
-			Log.Error("Failed to connect to proxy. Reconnecting proxy[%s] err[%s] ....", proxyURL, err.Error())
+			Log.Error("Failed to connect to proxy. Reconnecting ....")
 			time.Sleep(time.Duration(retry*5) * time.Second)
 			setup(url, tenant, jsonInfo, retry+1)
 			return err
@@ -97,17 +95,15 @@ func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 		}
 		return err
 	}
-	defer ws.Close()
 
 	result := make(chan error, 1)
 	session := remotedialer.NewClientSession(
 		func(proto, address string) bool { return true },
 		ws,
 	)
-	defer session.Close()
 	go func() {
 		if retry == 0 {
-			Log.Info("setting up tunnel to WebPty")
+			Log.Debug("setting up tunnel to WebPty")
 		} else {
 			Log.Info("tunnel is back online")
 		}
@@ -124,11 +120,15 @@ func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 		} else if rerr.Code == 1006 {
 			Log.Info("Proxy has disconnected. Reconnecting ....")
 			time.Sleep(time.Duration(retry*5) * time.Second)
+			session.Close()
+			ws.Close()
 			setup(url, tenant, jsonInfo, retry+1)
 		} else {
 			Log.Error("Session serve code[%d] msg[%s]", rerr.Code, rerr.Text)
 		}
 	}
+	session.Close()
+	ws.Close()
 	return nil
 }
 

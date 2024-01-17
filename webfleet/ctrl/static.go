@@ -8,13 +8,13 @@ import (
 	"net/http"
 )
 
-func ServeFile(path string) func(res http.ResponseWriter, req *http.Request) {
-	return func(res http.ResponseWriter, req *http.Request) {
+func ServeFile(path string) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		file, err := view.Tmpl.Open(path)
 		if err != nil {
-			ctrl.ErrorPage(res, ErrNotFound, 404)
+			ctrl.ErrorPage(w, ErrNotFound, 404)
 			return
 		}
-		io.Copy(res, file)
+		io.Copy(w, file)
 	}
 }

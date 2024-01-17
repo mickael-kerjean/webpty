@@ -89,18 +89,21 @@
                      return;
                  }
                  websocket.close();
+                 if (e.type === "message" && e.data.indexOf("input/output error") > 0) {
+                     // even triggered on exit
+                     term.dispose();
+                     location.href = "/";
+                     return;
+                 }
                  term.writeln("Something went wrong");
-                 // term.dispose();
              }
 
              websocket.onclose = function(){
                  term.writeln("Session terminated");
-                 // term.dispose();
              }
 
              websocket.onerror = function(e){
                  term.writeln("Websocket Error");
-                 // term.dispose();
              }
          }
 

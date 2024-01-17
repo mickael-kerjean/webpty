@@ -9,20 +9,20 @@ import (
 	"net/http"
 )
 
-func ListServers(res http.ResponseWriter, req *http.Request) {
+func ListServers(w http.ResponseWriter, r *http.Request) {
 	lsrv, err := model.Machines.List()
 	if err != nil {
 		Log.Error("ctrl::servers list machines failed '%s'", err.Error())
-		ctrl.ErrorPage(res, err, 400)
+		ctrl.ErrorPage(w, err, 400)
 		return
 	}
 	tmpl, err := template.ParseFS(view.Tmpl, "dashboard.html")
 	if err != nil {
-		ctrl.ErrorPage(res, err, 500)
+		ctrl.ErrorPage(w, err, 500)
 		return
 	}
 	tmpl.Execute(
-		res,
+		w,
 		map[string]interface{}{
 			"servers": lsrv,
 		},

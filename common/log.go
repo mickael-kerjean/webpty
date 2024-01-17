@@ -15,6 +15,13 @@ func (this *log) Stdout(format string, v ...interface{}) {
 	fmt.Printf(format+"\n", v...)
 }
 
+func (this *log) Debug(format string, v ...interface{}) {
+	var t = make([]interface{}, 0)
+	t = append(t, this.now())
+	t = append(t, v...)
+	fmt.Printf("%s DEBUG "+format+"\n", t...)
+}
+
 func (this *log) Info(format string, v ...interface{}) {
 	var t = make([]interface{}, 0)
 	t = append(t, this.now())

@@ -25,7 +25,6 @@ func init() {
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", ctrl.Main)
-	mux.HandleFunc("/setup", ctrl.SetupTunnel)
 	mux.HandleFunc("/tunnel.js", ctrl.RedirectTunnel)
 	mux.HandleFunc("/healthz", ctrl.HealthCheck)
 	mux.HandleFunc("/favicon.ico", ctrl.ServeFavicon)
@@ -49,9 +48,7 @@ func main() {
 		Log.Error("ssl.GenerateSelfSigned %s", err.Error())
 		return
 	}
-	Log.Info("WebPty is ready to go")
-
-	if err := (&http.Server{
+	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
 		Handler:      mux,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
@@ -73,7 +70,20 @@ func main() {
 			Certificates: []tls.Certificate{TLSCert},
 		},
 		ErrorLog: NewNilLogger(),
-	}).ListenAndServeTLS("", ""); err != nil {
+	}
+	if remote := os.Getenv("FLEET"); remote != "" {
+		go func() {
+			if _, err = ctrl.InitTunnel(remote); err != nil {
+				Log.Error("WebPty tunnel couldn't be established ...")
+				srv.Close()
+				return
+			}
+			Log.Info("WebPty is ready to go")
+		}()
+	} else {
+		Log.Info("WebPty is ready to go")
+	}
+	if err := srv.ListenAndServeTLS("", ""); err != nil {
 		Log.Error("[https]: listen_serve %v", err)
 	}
 }
