@@ -1,12 +1,13 @@
 package ctrl
 
 import (
+	"html/template"
+	"net/http"
+
 	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/mickael-kerjean/webpty/ctrl"
 	"github.com/mickael-kerjean/webpty/webfleet/model"
 	"github.com/mickael-kerjean/webpty/webfleet/view"
-	"html/template"
-	"net/http"
 )
 
 func ListServers(w http.ResponseWriter, r *http.Request) {

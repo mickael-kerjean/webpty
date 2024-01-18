@@ -160,7 +160,11 @@
                   setTimeout(run, 1000);
               });
           }
-          setTimeout(run, 1000);
+          if (location.protocol === "https:") setTimeout(run, 1000);
+          else {
+              document.querySelector(".server-list").remove();
+              document.querySelector(".quick-guide").innerText = "SSL must be enabled";
+          }
         </script>
     </body>
 </html>
