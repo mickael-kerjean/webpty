@@ -16,11 +16,30 @@ import (
 func GetMachineInfo() []byte {
 	s := Server{
 		MachineID: func() string {
-			if runtime.GOOS == "darwin" {
-				c, b := exec.Command("system_profiler", "SPHardwareDataType"), new(strings.Builder)
-				c.Stdout = b
-				c.Run()
-				return createHash(b.String())
+			if isMac() {
+				return createHash(execCmd("system_profiler", "SPHardwareDataType"))
+			} else if isAndroid() {
+				return createHash(execCmd("getprop", "ro.product.model") +
+					execCmd("getprop", "ro.product.brand") +
+					execCmd("getprop", "ro.product.name") +
+					execCmd("getprop", "ro.product.manufacturer") +
+					execCmd("getprop", "ro.build.version.release") +
+					execCmd("getprop", "ro.build.version.sdk") +
+					execCmd("getprop", "ro.hardware") +
+					execCmd("getprop", "ro.arch") +
+					execCmd("getprop", "ro.sf.lcd_density") +
+					execCmd("getprop", "persist.sys.display.size") +
+					execCmd("getprop", "gsm.operator.alpha") +
+					execCmd("getprop", "gsm.version.ril-impl") +
+					execCmd("getprop", "getprop bluetooth.nam") +
+					execCmd("getprop", "wifi.interface") +
+					execCmd("getprop", "ro.serialno") +
+					execCmd("getprop", "ro.bootloader") +
+					execCmd("getprop", "ro.serialno") +
+					execCmd("getprop", "ro.kernel.android.checkjni") +
+					execCmd("getprop", "ro.boot.kernel") +
+					execCmd("getprop", "persist.sys.country") +
+					execCmd("getprop", "persist.sys.language"))
 			}
 			content, err := os.ReadFile("/etc/machine-id")
 			if err != nil {
@@ -29,8 +48,10 @@ func GetMachineInfo() []byte {
 			return strings.TrimSpace(string(content))
 		}(),
 		Device: func() string {
-			if runtime.GOOS == "darwin" {
+			if isMac() {
 				return "Apple"
+			} else if isAndroid() {
+				return execCmd("getprop", "ro.product.brand")
 			}
 			m := ""
 			if content, err := os.ReadFile("/sys/devices/virtual/dmi/id/sys_vendor"); err == nil && string(content) != "" {
@@ -45,11 +66,10 @@ func GetMachineInfo() []byte {
 			return m
 		}(),
 		Hostname: func() string {
-			if runtime.GOOS == "darwin" {
-				c, b := exec.Command("scutil", "--get", "HostName"), new(strings.Builder)
-				c.Stdout = b
-				c.Run()
-				return b.String()
+			if isMac() {
+				return execCmd("scutil", "--get", "HostName")
+			} else if isAndroid() {
+				return ""
 			}
 			content, err := os.ReadFile("/etc/hostname")
 			if err != nil {
@@ -58,14 +78,10 @@ func GetMachineInfo() []byte {
 			return strings.TrimSpace(string(content))
 		}(),
 		Os: func() string {
-			if runtime.GOOS == "darwin" {
-				a, b := exec.Command("sw_vers", "-productName"), new(strings.Builder)
-				a.Stdout = b
-				a.Run()
-				c, d := exec.Command("sw_vers", "-productVersion"), new(strings.Builder)
-				c.Stdout = d
-				c.Run()
-				return b.String() + " " + d.String()
+			if isMac() {
+				return execCmd("sw_vers", "-productName") + " " + execCmd("sw_vers", "-productVersion")
+			} else if isAndroid() {
+				return "Android"
 			}
 			content, err := os.ReadFile("/etc/os-release")
 			if err != nil {
@@ -80,7 +96,9 @@ func GetMachineInfo() []byte {
 			return ""
 		}(),
 		Kernel: func() string {
-			if runtime.GOOS == "darwin" {
+			if isMac() {
+				return ""
+			} else if isAndroid() {
 				return ""
 			}
 			c, b := exec.Command("uname", "-r"), new(strings.Builder)
@@ -89,11 +107,13 @@ func GetMachineInfo() []byte {
 			return strings.TrimSpace(b.String())
 		}(),
 		Arch: func() string {
-			if runtime.GOOS == "darwin" {
+			if isMac() {
 				c, b := exec.Command("arch"), new(strings.Builder)
 				c.Stdout = b
 				c.Run()
 				return strings.TrimSpace(b.String())
+			} else if isAndroid() {
+				return "arm"
 			}
 			c, b := exec.Command("uname", "-m"), new(strings.Builder)
 			c.Stdout = b
@@ -125,4 +145,20 @@ func createHash(text string) string {
 		panic(err)
 	}
 	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func isMac() bool {
+	return runtime.GOOS == "darwin"
+}
+
+func isAndroid() bool {
+	_, err := os.Stat("/system/app")
+	return err == nil
+}
+
+func execCmd(program string, args ...string) string {
+	c, b := exec.Command(program, args[1:]...), new(strings.Builder)
+	c.Stdout = b
+	c.Run()
+	return b.String()
 }
