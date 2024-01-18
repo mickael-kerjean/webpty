@@ -1,9 +1,13 @@
 package model
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	. "github.com/mickael-kerjean/webpty/common"
@@ -12,6 +16,12 @@ import (
 func GetMachineInfo() []byte {
 	s := Server{
 		MachineID: func() string {
+			if runtime.GOOS == "darwin" {
+				c, b := exec.Command("system_profiler", "SPHardwareDataType"), new(strings.Builder)
+				c.Stdout = b
+				c.Run()
+				return createHash(b.String())
+			}
 			content, err := os.ReadFile("/etc/machine-id")
 			if err != nil {
 				return ""
@@ -19,6 +29,9 @@ func GetMachineInfo() []byte {
 			return strings.TrimSpace(string(content))
 		}(),
 		Device: func() string {
+			if runtime.GOOS == "darwin" {
+				return "Apple"
+			}
 			m := ""
 			if content, err := os.ReadFile("/sys/devices/virtual/dmi/id/sys_vendor"); err == nil && string(content) != "" {
 				m += string(content)
@@ -32,6 +45,12 @@ func GetMachineInfo() []byte {
 			return m
 		}(),
 		Hostname: func() string {
+			if runtime.GOOS == "darwin" {
+				c, b := exec.Command("scutil", "--get", "HostName"), new(strings.Builder)
+				c.Stdout = b
+				c.Run()
+				return b.String()
+			}
 			content, err := os.ReadFile("/etc/hostname")
 			if err != nil {
 				return ""
@@ -39,6 +58,15 @@ func GetMachineInfo() []byte {
 			return strings.TrimSpace(string(content))
 		}(),
 		Os: func() string {
+			if runtime.GOOS == "darwin" {
+				a, b := exec.Command("sw_vers", "-productName"), new(strings.Builder)
+				a.Stdout = b
+				a.Run()
+				c, d := exec.Command("sw_vers", "-productVersion"), new(strings.Builder)
+				c.Stdout = d
+				c.Run()
+				return b.String() + " " + d.String()
+			}
 			content, err := os.ReadFile("/etc/os-release")
 			if err != nil {
 				return ""
@@ -52,12 +80,21 @@ func GetMachineInfo() []byte {
 			return ""
 		}(),
 		Kernel: func() string {
+			if runtime.GOOS == "darwin" {
+				return ""
+			}
 			c, b := exec.Command("uname", "-r"), new(strings.Builder)
 			c.Stdout = b
 			c.Run()
 			return strings.TrimSpace(b.String())
 		}(),
 		Arch: func() string {
+			if runtime.GOOS == "darwin" {
+				c, b := exec.Command("arch"), new(strings.Builder)
+				c.Stdout = b
+				c.Run()
+				return strings.TrimSpace(b.String())
+			}
 			c, b := exec.Command("uname", "-m"), new(strings.Builder)
 			c.Stdout = b
 			c.Run()
@@ -79,4 +116,13 @@ func GetMachineInfo() []byte {
 		return []byte("{}")
 	}
 	return b
+}
+
+func createHash(text string) string {
+	hasher := md5.New()
+	_, err := io.WriteString(hasher, text)
+	if err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(hasher.Sum(nil))
 }

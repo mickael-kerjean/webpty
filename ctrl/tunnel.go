@@ -31,8 +31,8 @@ func InitTunnel(tunnelServer string) (string, error) {
 			return
 		}
 	}()
-	for i := 0; i < 50; i++ {
-		time.Sleep(1000 * time.Millisecond)
+	for i := 0; i < 30; i++ {
+		time.Sleep(time.Duration(i*1000+10) * time.Millisecond)
 		resp, err := http.Get(tunnelURL + "healthz")
 		if err != nil {
 			continue

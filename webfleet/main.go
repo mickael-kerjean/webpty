@@ -16,7 +16,8 @@ import (
 func main() {
 	addr := ":8123"
 	router := mux.NewRouter()
-	router.HandleFunc("/connect", m.WithAuth(ctrl.TunnelConnect))
+	router.HandleFunc("/connect", ctrl.TunnelConnect)
+	router.HandleFunc("/{tenant}/healthz", ctrl.TunnelMain)
 	router.HandleFunc("/{tenant}/{path:.*}", m.WithAuth(ctrl.TunnelMain))
 	router.HandleFunc("/", m.WithAuth(ctrl.ListServers))
 	router.HandleFunc("/favicon.ico", wctrl.ServeFavicon)
