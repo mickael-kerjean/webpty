@@ -24,7 +24,7 @@ var (
 
 func InitTunnel(tunnelServer string) (string, error) {
 	tenant := RandomString(5)
-	tunnelURL = fmt.Sprintf("http://%s/%s/", tunnelServer, tenant)
+	tunnelURL = fmt.Sprintf("https://%s/%s/", tunnelServer, tenant)
 	go func() {
 		if err := setup(tunnelServer, tenant, model.GetMachineInfo(), 0); err != nil {
 			Log.Error("setup tunnel failed %s", err.Error())
@@ -65,7 +65,7 @@ func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 	if retry > 100 {
 		return ErrNotAvailable
 	}
-	proxyURL := fmt.Sprintf("ws://%s/connect", url)
+	proxyURL := fmt.Sprintf("wss://%s/connect", url)
 	rootCtx := context.Background()
 	dialer := &websocket.Dialer{
 		Proxy:            http.ProxyFromEnvironment,
@@ -88,9 +88,9 @@ func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 		} else {
 			rb, err2 := ioutil.ReadAll(resp.Body)
 			if err2 != nil {
-				Log.Error("Failed to connect to proxy. Response status: %v - %v. Couldn't read response body (err: %v)", resp.StatusCode, resp.Status, err2)
+				Log.Error("Failed to connect to proxy '%s'. Response status: %v - %v. Couldn't read response body (err: %v)", proxyURL, resp.StatusCode, resp.Status, err2)
 			} else {
-				Log.Error("Failed to connect to proxy. Response status: %v - %v. Response body: %s", resp.StatusCode, resp.Status, rb)
+				Log.Error("Failed to connect to proxy '%s'. Response status: %v. Response body: %s", proxyURL, resp.StatusCode, rb)
 			}
 		}
 		return err

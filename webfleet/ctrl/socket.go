@@ -154,7 +154,7 @@ func TunnelConnect(w http.ResponseWriter, r *http.Request) {
 
 func TunnelMain(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	if r.Header.Get("Connection") == "Upgrade" {
+	if strings.ToLower(r.Header.Get("Connection")) == "upgrade" {
 		ClientSocket(
 			w, r,
 			srv.Dialer(vars["tenant"], 15*time.Second),
