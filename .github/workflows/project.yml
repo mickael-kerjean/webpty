@@ -41,3 +41,5 @@ jobs:
         # upload new assets
         curl --data-binary @dist/webpty_linux_amd64.bin -H "Content-Type: application/octet-stream" -H "Authorization: Bearer $GITHUB_TOKEN" "https://uploads.github.com/repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=webpty_linux_amd64.bin"
         curl --data-binary @dist/webpty_linux_arm.bin -H "Content-Type: application/octet-stream" -H "Authorization: Bearer $GITHUB_TOKEN" "https://uploads.github.com/repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=webpty_linux_arm.bin"
+        curl --data-binary @dist/webpty_mac_amd64.bin -H "Content-Type: application/octet-stream" -H "Authorization: Bearer $GITHUB_TOKEN" "https://uploads.github.com/repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=webpty_mac_amd64.bin"
+        curl --data-binary @dist/webpty_mac_arm.bin -H "Content-Type: application/octet-stream" -H "Authorization: Bearer $GITHUB_TOKEN" "https://uploads.github.com/repos/$OWNER/$REPO/releases/$RELEASE_ID/assets?name=webpty_mac_arm.bin"
