@@ -56,6 +56,7 @@
              });
              term.loadAddon(fitAddon);
              term.open(document.getElementById("terminal"));
+             term.focus();
              fitAddon.fit();
 
              if (location.pathname == "/" && location.protocol !== "https:") {
