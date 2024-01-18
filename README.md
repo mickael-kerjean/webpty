@@ -24,8 +24,8 @@ WebPty works with an associated [web fleet server](https://github.com/mickael-ke
 - run webfleet (alpha release):
 ```
 # run the fleet server
-sudo CERTBOT=home.webptio.io AUTH_DRIVER=simple AUTH_USER=username:password ./webfleet.bin
+sudo CERTBOT=example.com AUTH_DRIVER=simple AUTH_USER=username:password ./webfleet.bin
 
 # attach your webpty to the fleet server
-FLEET=home.webpty.io go run ./main.go
+FLEET=example.com go run ./main.go
 ```

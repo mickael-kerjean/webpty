@@ -69,7 +69,7 @@ func GetMachineInfo() []byte {
 			if isMac() {
 				return execCmd("scutil", "--get", "HostName")
 			} else if isAndroid() {
-				return ""
+				return "android"
 			}
 			content, err := os.ReadFile("/etc/hostname")
 			if err != nil {
