@@ -21,8 +21,8 @@ jobs:
       run: |
         CGO_ENABLED=0 GOARCH="amd64" GOOS="linux" go build -o dist/webpty_linux_amd64.bin main.go
         CGO_ENABLED=0 GOARCH="arm" GOARM=7 GOOS="linux" go build -o dist/webpty_linux_arm.bin main.go
-        CGO_ENABLED=0 GOOS=darwin go build -o dist/webpty_mac_amd64.bin main.go
-        CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 dist/webpty_mac_arm.bin main.go
+        CGO_ENABLED=0 GOOS="darwin" GOARCH="amd64" go build -o dist/webpty_mac_amd64.bin main.go
+        CGO_ENABLED=0 GOOS="darwin" GOARCH="arm64" go build -o dist/webpty_mac_arm.bin main.go
 
     - name: Test
       run: go test ./...
