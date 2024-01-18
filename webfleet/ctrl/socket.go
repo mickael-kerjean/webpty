@@ -11,6 +11,7 @@ import (
 
 	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/mickael-kerjean/webpty/webfleet/model"
+	"github.com/mickael-kerjean/webpty/webfleet/view"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -113,8 +114,7 @@ func ClientSocket(w http.ResponseWriter, r *http.Request, dialer remotedialer.Di
 func ClientHTTP(w http.ResponseWriter, r *http.Request, dialer remotedialer.Dialer, url string, tenant string) {
 	r, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		Log.Error("REQ ERR %s: %s", url, err.Error())
-		remotedialer.DefaultErrorWriter(w, r, 500, err)
+		view.ErrorPage(w, err, http.StatusBadRequest)
 		return
 	}
 	for k, v := range r.Header {
@@ -128,8 +128,7 @@ func ClientHTTP(w http.ResponseWriter, r *http.Request, dialer remotedialer.Dial
 		},
 	}).Do(r)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(err.Error()))
+		view.ErrorPage(w, err, http.StatusNotFound)
 		return
 	}
 	defer resp.Body.Close()
