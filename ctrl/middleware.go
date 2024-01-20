@@ -44,11 +44,6 @@ func Middleware(fn func(res http.ResponseWriter, req *http.Request)) func(res ht
 		}
 		if _, found := tmpCache.Get(username + ":" + password); found == false {
 			var err error = nil
-			// if username != "test" || password != "test" {
-			// 	ErrorPage(res, ErrNotAuthorized, http.StatusUnauthorized)
-			// 	err = ErrNotAuthorized
-			// 	return
-			// }
 			sshPort := func() int {
 				p := 22
 				file, err := os.OpenFile("/etc/ssh/sshd_config", os.O_RDONLY, os.ModePerm)
