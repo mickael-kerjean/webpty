@@ -65,18 +65,27 @@
                  return;
              }
 
-             window.onresize = function() {
-                 fitAddon.fit();
+             function debounce(callback, delay) {
+                 let timer;
+                 return function() {
+                     clearTimeout(timer)
+                     timer = setTimeout(() => {
+                         callback();
+                     }, delay)
+                 }
              }
+             window.onresize = debounce(function() {
+                 fitAddon.fit();
+             }, 150);
 
              websocket.onopen = function(e) {
                  term.onData(function(data) {
-                     websocket.send(new TextEncoder().encode("\x00" + data));
-                     websocket.send(new TextEncoder().encode("\x01" + JSON.stringify({cols: term.cols, rows: term.rows})))
+                     websocket.send(new TextEncoder().encode("\x01" + data));
+                     websocket.send(new TextEncoder().encode("\x02" + JSON.stringify({cols: term.cols, rows: term.rows})))
                  });
                  term.onResize(function(evt) {
                      fitAddon.fit();
-                     websocket.send(new TextEncoder().encode("\x01" + JSON.stringify({cols: evt.cols, rows: evt.rows})))
+                     websocket.send(new TextEncoder().encode("\x02" + JSON.stringify({cols: evt.cols, rows: evt.rows})))
                  });
                  term.onTitleChange(function(title) {
                      document.title = title;
@@ -89,23 +98,22 @@
                      term.write(textDecoder.decode(new Uint8Array(e.data)));
                      return;
                  }
+                 websocket.onclose = null;
                  websocket.close();
                  if (e.type === "message" && e.data.indexOf("input/output error") > 0) {
                      // even triggered on exit
-                     term.dispose();
-                     location.href = "/";
+                     if (location.pathname !== "/") location.pathname = "/";
                      return;
                  }
-                 term.writeln("Something went wrong");
              }
 
-             websocket.onclose = function(){
-                 term.writeln("Session terminated");
-                 location.href = "/";
+             websocket.onclose = function() {
+                 window.alert("Disconnected");
+                 location.pathname = "/";
              }
 
              websocket.onerror = function(e){
-                 term.writeln("Websocket Error");
+                 term.writeln("Socket error");
              }
          }
 

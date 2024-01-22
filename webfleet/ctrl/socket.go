@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -19,23 +20,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var srv *remotedialer.Server
+var (
+	srv      *remotedialer.Server
+	upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
+)
 
 func init() {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableColors: true,
 	})
-	// logrus.SetLevel(logrus.DebugLevel)
-	// remotedialer.PrintTunnelData = true
 	logrus.SetLevel(logrus.FatalLevel)
-
-	authorizer := func(req *http.Request) (string, bool, error) {
-		id := req.Header.Get("x-machine-id")
-		return id, id != "", nil
+	if os.Getenv("DEBUG") == "true" {
+		logrus.SetLevel(logrus.DebugLevel)
+		remotedialer.PrintTunnelData = true
 	}
 	srv = remotedialer.New(
-		authorizer,
-		func(rw http.ResponseWriter, req *http.Request, code int, err error) { // error writer
+		func(req *http.Request) (string, bool, error) {
+			id := req.Header.Get("x-machine-id")
+			return id, id != "", nil
+		},
+		func(rw http.ResponseWriter, req *http.Request, code int, err error) {
 			rw.WriteHeader(code)
 			rw.Write([]byte(err.Error()))
 		},
@@ -44,15 +51,10 @@ func init() {
 	srv.PeerID = "id"
 }
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
 func ClientSocket(w http.ResponseWriter, r *http.Request, dialer remotedialer.Dialer, url string, tenant string) {
-	proxyConn, err := upgrader.Upgrade(w, r, nil)
+	browserConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		Log.Error("socket.go::upgrade_error tenant[%s] err[%s]", tenant, err.Error())
+		Log.Error("socket.go::upgrade_error tenant=%s err=%s", tenant, err.Error())
 		w.Write([]byte(err.Error()))
 		return
 	}
@@ -79,33 +81,36 @@ func ClientSocket(w http.ResponseWriter, r *http.Request, dialer remotedialer.Di
 		}(),
 	)
 	if err != nil {
-		Log.Error("socket.go::connection_failed tenant[%s] err[%s]", tenant, err.Error())
+		Log.Error("socket.go::connection_failed tenant=%s err=%s", tenant, err.Error())
 		return
 	}
-	Log.Info("connected to %s", url)
+	Log.Info("socket.go::connected tenant=%s", tenant)
 	go func() {
 		for {
 			mtype, message, err := appConn.ReadMessage()
 			if err != nil {
-				Log.Error("socket.go::conn::read_message tenant[%s] err[%s]", tenant, err.Error())
+				Log.Error("socket.go::conn::read_message tenant=%s err=%s", tenant, err.Error())
 				return
 			}
-			err = proxyConn.WriteMessage(mtype, message)
-			if err != nil {
-				Log.Error("socket.go::conn::write_message tenant[%s] err[%s]", tenant, err.Error())
+			if err = browserConn.WriteMessage(mtype, message); err != nil {
+				Log.Error("socket.go::conn::write_message tenant=%s err=%s", tenant, err.Error())
 				return
 			}
 		}
 	}()
 	for {
-		mtype, message, err := proxyConn.ReadMessage()
+		mtype, message, err := browserConn.ReadMessage()
 		if err != nil {
-			Log.Error("socket.go::proxy::read_message tenant[%s] err[%s]", tenant, err.Error())
+			if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNoStatusReceived) {
+				Log.Debug("socket.go::disconnected::browser tenant=%s", tenant)
+				appConn.WriteMessage(websocket.BinaryMessage, []byte{0})
+				return
+			}
+			Log.Error("socket.go::proxy::read_message tenant=%s err=%s", tenant, err.Error())
 			return
 		}
-		err = appConn.WriteMessage(mtype, message)
-		if err != nil {
-			Log.Error("socket.go::proxy::write_message tenant[%s] err[%s]", tenant, err.Error())
+		if err = appConn.WriteMessage(mtype, message); err != nil {
+			Log.Error("socket.go::proxy::write_message tenant=%s err=%s", tenant, err.Error())
 			return
 		}
 	}

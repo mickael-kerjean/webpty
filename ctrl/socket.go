@@ -97,44 +97,50 @@ EOF
 		}
 	}()
 
+	Log.Info("connected client")
 	for {
 		messageType, reader, err := conn.NextReader()
-		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
-			return
-		} else if err != nil {
-			Log.Error("socket.go::nextReader unexpected close error %s", err.Error())
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseNoStatusReceived) {
+				Log.Error("socket.go::nextReader unexpected close error %s", err.Error())
+				return
+			}
+			Log.Debug("socket.go::disconnection_event - browser is disconnected")
 			return
 		} else if messageType == websocket.TextMessage {
-			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected text message"))
-			continue
+			Log.Debug("socket.go::expectation_failed - Unexpected text message")
+			return
 		}
 
 		dataTypeBuf := make([]byte, 1)
 		read, err := reader.Read(dataTypeBuf)
 		if err != nil {
-			conn.WriteMessage(websocket.TextMessage, []byte("Unable to read message type from reader"))
+			Log.Error("socket.go::error - Unable to read message type from reader")
 			return
 		} else if read != 1 {
+			Log.Error("socket.go::expectation_failed - Unexpected message size")
 			return
 		}
-
 		switch dataTypeBuf[0] {
 		case 0:
+			Log.Info("disconnected")
+			return
+		case 1:
 			b, err := io.ReadAll(reader)
 			if err != nil {
-				conn.WriteMessage(websocket.TextMessage, []byte("Error copying bytes: "+err.Error()))
-				continue
+				Log.Error("socket.go::error - copying bytes: %s", err.Error())
+				return
 			}
 			_, err = tty.Write(b)
 			if err != nil {
-				conn.WriteMessage(websocket.TextMessage, []byte("Error writing bytes: "+err.Error()))
-				continue
+				Log.Error("socket.go::error - writing bytes: %s", err.Error())
+				return
 			}
-		case 1:
+		case 2:
 			decoder := json.NewDecoder(reader)
 			if err := decoder.Decode(&resizeMessage); err != nil {
-				conn.WriteMessage(websocket.TextMessage, []byte("Error decoding resize message: "+err.Error()))
-				continue
+				Log.Error("socket.go::error - decoding resize message: %s", err.Error())
+				return
 			}
 			if _, _, errno := syscall.Syscall(
 				syscall.SYS_IOCTL,
@@ -142,10 +148,12 @@ EOF
 				syscall.TIOCSWINSZ,
 				uintptr(unsafe.Pointer(&resizeMessage)),
 			); errno != 0 {
-				conn.WriteMessage(websocket.TextMessage, []byte("Unable to resize terminal: "+err.Error()))
+				Log.Error("socket.go::expectation_failed - errno[%+v]", errno)
+				return
 			}
 		default:
-			conn.WriteMessage(websocket.TextMessage, []byte("Unknown data type: "+err.Error()))
+			Log.Error("socket.go::expectation_failed - unknown socket data type: %+v", dataTypeBuf)
+			return
 		}
 	}
 }
