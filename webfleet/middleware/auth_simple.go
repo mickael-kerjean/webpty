@@ -5,12 +5,18 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	. "github.com/mickael-kerjean/webpty/common"
 	"github.com/mickael-kerjean/webpty/webfleet/view"
+
+	"golang.org/x/time/rate"
 )
 
-var simple_users = map[string]string{}
+var (
+	simple_users = map[string]string{}
+	limiter      = rate.NewLimiter(10, 200)
+)
 
 func init() {
 	if AUTH_DRIVER != "simple" {
@@ -34,8 +40,14 @@ func init() {
 
 func driverSimple(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	username, password, ok := r.BasicAuth()
+	if limiter.Allow() == false {
+		Log.Warning("middleware::auth - too many requests")
+		view.ErrorPage(w, errors.New("Too Many Requests"), http.StatusTooManyRequests)
+		return
+	}
 	if !ok || (simple_users[username] == "" || simple_users[username] != password) {
 		w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
+		time.Sleep(1 * time.Second)
 		view.ErrorPage(w, errors.New("Not Authorised"), http.StatusUnauthorized)
 		return
 	}
