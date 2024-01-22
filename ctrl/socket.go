@@ -41,7 +41,7 @@ func HandleSocket(res http.ResponseWriter, req *http.Request) {
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd")
+		cmd = exec.CommandContext(req.Context(), "cmd")
 	} else if _, err = exec.LookPath("/bin/bash"); err == nil {
 		bashCommand := `bash --noprofile --init-file <(cat <<EOF
 export TERM="xterm"
@@ -58,9 +58,9 @@ alias ls='ls --color'
 alias ll='ls -lah'
 EOF
 )`
-		cmd = exec.Command("/bin/bash", "-c", bashCommand)
+		cmd = exec.CommandContext(req.Context(), "/bin/bash", "-c", bashCommand)
 	} else if _, err = exec.LookPath("/bin/sh"); err == nil {
-		cmd = exec.Command("/bin/sh")
+		cmd = exec.CommandContext(req.Context(), "/bin/sh")
 		cmd.Env = []string{
 			"TERM=xterm",
 			"PATH=" + os.Getenv("PATH"),
@@ -99,7 +99,10 @@ EOF
 
 	for {
 		messageType, reader, err := conn.NextReader()
-		if err != nil {
+		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
+			return
+		} else if err != nil {
+			Log.Error("socket.go::nextReader unexpected close error %s", err.Error())
 			return
 		} else if messageType == websocket.TextMessage {
 			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected text message"))
