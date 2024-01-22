@@ -44,6 +44,8 @@ func GetMachineInfo() []byte {
 			content, err := os.ReadFile("/etc/machine-id")
 			if err != nil {
 				return ""
+			} else if string(content) == "" {
+				content, _ = os.ReadFile("/proc/sys/kernel/random/uuid")
 			}
 			return strings.TrimSpace(string(content))
 		}(),
@@ -157,7 +159,7 @@ func isAndroid() bool {
 }
 
 func execCmd(program string, args ...string) string {
-	c, b := exec.Command(program, args[1:]...), new(strings.Builder)
+	c, b := exec.Command(program, args...), new(strings.Builder)
 	c.Stdout = b
 	c.Run()
 	return b.String()
