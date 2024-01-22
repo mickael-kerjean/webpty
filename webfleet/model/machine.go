@@ -96,12 +96,6 @@ func GetMachineInfo() []byte {
 			}
 			return execCmd("uname", "-m")
 		}(),
-		PublicIP: func() string {
-			return ""
-		}(),
-		PrivateIP: func() string {
-			return ""
-		}(),
 		IsOnline: func() bool {
 			return true
 		}(),

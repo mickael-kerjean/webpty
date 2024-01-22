@@ -21,8 +21,6 @@ type Server struct {
 	Os        string `json:"os"`
 	Kernel    string `json:"kernel"`
 	Arch      string `json:"arch"`
-	PublicIP  string `json:"publicIP"`
-	PrivateIP string `json:"privateIP"`
 	IsOnline  bool   `json:"isOnline"`
 }
 
@@ -40,7 +38,7 @@ func (this *ServerManager) Add(tenant string, info map[string]interface{}) error
 	this.db.Store(tenant, Server{
 		tenant, str(info["machineID"]), str(info["device"]),
 		str(info["hostname"]), str(info["os"]), str(info["kernel"]), str(info["arch"]),
-		str(info["publicIp"]), str(info["privateIP"]), true,
+		true,
 	})
 	return nil
 }
