@@ -44,10 +44,10 @@ func GetMachineInfo() []byte {
 			content, err := os.ReadFile("/etc/machine-id")
 			if err != nil {
 				return ""
-			} else if string(content) == "" {
-				content, _ = os.ReadFile("/proc/sys/kernel/random/uuid")
+			} else if string(content) != "" {
+				return strings.TrimSpace(string(content))
 			}
-			return strings.TrimSpace(string(content))
+			return RandomString(5)
 		}(),
 		Device: func() string {
 			if isMac() {

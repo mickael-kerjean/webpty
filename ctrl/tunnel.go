@@ -2,11 +2,9 @@ package ctrl
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
-	"math/big"
 	"net/http"
 	"time"
 
@@ -130,20 +128,4 @@ func setup(url string, tenant string, jsonInfo []byte, retry int) error {
 	session.Close()
 	ws.Close()
 	return nil
-}
-
-var Letters = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
-
-func RandomString(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		max := *big.NewInt(int64(len(Letters)))
-		r, err := rand.Int(rand.Reader, &max)
-		if err != nil {
-			b[i] = Letters[0]
-		} else {
-			b[i] = Letters[r.Int64()]
-		}
-	}
-	return string(b)
 }
