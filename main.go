@@ -54,13 +54,7 @@ func main() {
 	}
 	srv := &http.Server{
 		Addr: fmt.Sprintf(
-			"%s:%d",
-			func() string {
-				if FLEET_MODE {
-					return "0.0.0.0"
-				}
-				return "127.0.0.1"
-			}(),
+			":%d",
 			port,
 		),
 		Handler:      mux,
