@@ -41,13 +41,11 @@ func GetMachineInfo() []byte {
 					execCmd("getprop", "persist.sys.country") +
 					execCmd("getprop", "persist.sys.language"))
 			}
-			content, err := os.ReadFile("/etc/machine-id")
-			if err != nil {
-				return ""
-			} else if string(content) != "" {
-				return strings.TrimSpace(string(content))
+			content := fileString("/etc/machine-id")
+			if content != "" {
+				return content
 			}
-			return RandomString(5)
+			return fileString("/etc/hostname")
 		}(),
 		Device: func() string {
 			if isMac() {
@@ -55,17 +53,9 @@ func GetMachineInfo() []byte {
 			} else if isAndroid() {
 				return execCmd("getprop", "ro.product.brand")
 			}
-			m := ""
-			if content, err := os.ReadFile("/sys/devices/virtual/dmi/id/sys_vendor"); err == nil && string(content) != "" {
-				m += string(content)
-			}
-			if content, err := os.ReadFile("/sys/devices/virtual/dmi/id/product_version"); err == nil && string(content) != "" {
-				m += string(content)
-			}
-			if content, err := os.ReadFile("/sys/devices/virtual/dmi/id/product_name"); err == nil && string(content) != "" {
-				m += string(content)
-			}
-			return m
+			return fileString("/sys/devices/virtual/dmi/id/sys_vendor") + " " +
+				fileString("/sys/devices/virtual/dmi/id/product_version") + " " +
+				fileString("/sys/devices/virtual/dmi/id/product_name")
 		}(),
 		Hostname: func() string {
 			if isMac() {
@@ -73,11 +63,7 @@ func GetMachineInfo() []byte {
 			} else if isAndroid() {
 				return "android"
 			}
-			content, err := os.ReadFile("/etc/hostname")
-			if err != nil {
-				return ""
-			}
-			return strings.TrimSpace(string(content))
+			return fileString("/etc/hostname")
 		}(),
 		Os: func() string {
 			if isMac() {
@@ -85,10 +71,7 @@ func GetMachineInfo() []byte {
 			} else if isAndroid() {
 				return "Android"
 			}
-			content, err := os.ReadFile("/etc/os-release")
-			if err != nil {
-				return ""
-			}
+			content := fileString("/etc/os-release")
 			for _, line := range strings.Split(string(content), "\n") {
 				if strings.HasPrefix(line, "PRETTY_NAME=") == false {
 					continue
@@ -103,24 +86,15 @@ func GetMachineInfo() []byte {
 			} else if isAndroid() {
 				return ""
 			}
-			c, b := exec.Command("uname", "-r"), new(strings.Builder)
-			c.Stdout = b
-			c.Run()
-			return strings.TrimSpace(b.String())
+			return execCmd("uname", "-r")
 		}(),
 		Arch: func() string {
 			if isMac() {
-				c, b := exec.Command("arch"), new(strings.Builder)
-				c.Stdout = b
-				c.Run()
-				return strings.TrimSpace(b.String())
+				return execCmd("arch")
 			} else if isAndroid() {
 				return "arm"
 			}
-			c, b := exec.Command("uname", "-m"), new(strings.Builder)
-			c.Stdout = b
-			c.Run()
-			return strings.TrimSpace(b.String())
+			return execCmd("uname", "-m")
 		}(),
 		PublicIP: func() string {
 			return ""
@@ -149,6 +123,21 @@ func createHash(text string) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
+func execCmd(program string, args ...string) string {
+	c, b := exec.Command(program, args...), new(strings.Builder)
+	c.Stdout = b
+	c.Run()
+	return strings.TrimSpace(b.String())
+}
+
+func fileString(path string) string {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(content))
+}
+
 func isMac() bool {
 	return runtime.GOOS == "darwin"
 }
@@ -156,11 +145,4 @@ func isMac() bool {
 func isAndroid() bool {
 	_, err := os.Stat("/system/app")
 	return err == nil
-}
-
-func execCmd(program string, args ...string) string {
-	c, b := exec.Command(program, args...), new(strings.Builder)
-	c.Stdout = b
-	c.Run()
-	return b.String()
 }
