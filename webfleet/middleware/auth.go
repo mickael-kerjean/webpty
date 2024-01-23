@@ -16,6 +16,9 @@ var (
 )
 
 func init() {
+	if strings.HasSuffix(os.Args[0], ".test") {
+		return
+	}
 	AUTH_DRIVER = strings.ToLower(os.Getenv("AUTH_DRIVER"))
 	switch AUTH_DRIVER {
 	case "yolo":

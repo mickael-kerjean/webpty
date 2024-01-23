@@ -82,7 +82,7 @@ func GetMachineInfo() []byte {
 		}(),
 		Kernel: func() string {
 			if isMac() {
-				return ""
+				return strings.TrimPrefix(execCmd("sysctl", "kern.version"), "kern.version: ")
 			} else if isAndroid() {
 				return ""
 			}

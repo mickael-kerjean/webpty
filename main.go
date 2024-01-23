@@ -12,7 +12,10 @@ import (
 	"strconv"
 )
 
-var port int = 3456
+var (
+	port int = 3456
+	srv  *http.Server
+)
 
 func init() {
 	if pStr := os.Getenv("PORT"); pStr != "" {
@@ -52,7 +55,7 @@ func main() {
 		Log.Error("ssl.GenerateSelfSigned %s", err.Error())
 		return
 	}
-	srv := &http.Server{
+	srv = &http.Server{
 		Addr: fmt.Sprintf(
 			":%d",
 			port,

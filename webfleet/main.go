@@ -16,6 +16,8 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+var srv *http.Server
+
 func main() {
 	addr := ":8123"
 	router := mux.NewRouter()
@@ -32,7 +34,7 @@ func main() {
 			HostPolicy: autocert.HostWhitelist(host, host+addr),
 			Cache:      autocert.DirCache("certs"),
 		}
-		srv := &http.Server{
+		srv = &http.Server{
 			Addr:    ":https",
 			Handler: router,
 			TLSConfig: &tls.Config{
@@ -47,6 +49,11 @@ func main() {
 		}
 		return
 	}
+
+	srv = &http.Server{
+		Addr:    addr,
+		Handler: router,
+	}
 	Log.Info("Listening on %s", addr)
-	http.ListenAndServe(addr, router)
+	srv.ListenAndServe()
 }

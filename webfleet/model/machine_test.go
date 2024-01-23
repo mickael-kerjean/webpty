@@ -16,7 +16,7 @@ func TestGetMachineInfo(t *testing.T) {
 	assert.NotEqual(t, "", data["os"])
 	assert.NotEqual(t, "", data["kernel"])
 	assert.NotEqual(t, "", data["arch"])
-	// assert.NotEqual(t, data["publicIP"], "")
-	// assert.Equal(t, data["privateIP"], "")
-	// Log.Info("DATA %+v", data)
+	assert.NotEqual(t, "", data["device"])
+	assert.NotEqual(t, "", data["machineID"])
+	assert.Equal(t, true, data["isOnline"])
 }

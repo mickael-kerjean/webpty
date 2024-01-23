@@ -6,6 +6,7 @@ import (
 )
 
 func TestErrors(t *testing.T) {
-	assert.Contains(t, ErrNotFound.Error(), "Page Not Found")
-	assert.Contains(t, ErrNotAuthorized.Error(), "Not Authorized")
+	assert.Equal(t, ErrNotFound.Error(), "Page Not Found")
+	assert.Equal(t, ErrNotAuthorized.Error(), "Not Authorized")
+	assert.Equal(t, ErrNotAvailable.Error(), "Not Available")
 }

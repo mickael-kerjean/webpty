@@ -27,3 +27,19 @@ func TestHandleStatic(t *testing.T) {
 		assert.Equal(t, test.ExpectedCode, res.Code)
 	}
 }
+
+func TestEndpointHealthCheck(t *testing.T) {
+	w := httptest.NewRecorder()
+	HealthCheck(w, httptest.NewRequest("GET", "/healthz", nil))
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, "OK", w.Body.String())
+}
+
+func TestEndpointFavicon(t *testing.T) {
+	w := httptest.NewRecorder()
+	ServeFavicon(w, httptest.NewRequest("GET", "/favicon.ico", nil))
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.True(t, len(w.Body.String()) > 10)
+}
