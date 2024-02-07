@@ -1,0 +1,11 @@
+[Unit]
+Description=webpty
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+ExecStart=/usr/local/bin/webpty.bin
+
+[Install]
+WantedBy=default.target
